@@ -27,5 +27,6 @@ ExternalProject_Add(signature_contest
     INSTALL_COMMAND ""
 )
 
-file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/*/**.h) # Make QtCreator to show headers
-add_custom_target(${PROJECT_NAME}_aux SOURCES ${HEADER_FILES})
+file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/include/*.h) # Make QtCreator to show headers
+file(GLOB_RECURSE VALIDATOR_FILES ${PROJECT_SOURCE_DIR}/ext/signature_contest/**) # Make QtCreator to show headers
+add_custom_target(${PROJECT_NAME}_aux SOURCES ${HEADER_FILES} ${VALIDATOR_FILES})

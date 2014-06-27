@@ -1,3 +1,4 @@
 CMakeLists.txt.user
 ext/_result
 build
+ext/signature_contest/platform.options

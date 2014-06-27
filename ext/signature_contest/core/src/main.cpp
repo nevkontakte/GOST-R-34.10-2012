@@ -111,7 +111,7 @@ static void dump_input_data( bool sign, const TestEntry& entry )
      }
      else
      {
-          cerr << "Signature:" << endl;
+          cerr << "Expected signature:" << endl;
      }
      dump_array( entry.sign, sizeof(entry.sign) );
      cerr << endl;
@@ -239,11 +239,14 @@ int main( int argc, char* argv[] )
                if( status == kStatusOk )
                {
                     cerr << "Incorrect signature generated" << endl;
-                    memcpy( entry.sign, signature, sizeof(entry.sign) );
+//                    memcpy( entry.sign, signature, sizeof(entry.sign) );
                }
                print_sign_error( SIGN_FUNCTION_NAME, status );
                cerr << endl;
                dump_input_data( true, entry );
+               cerr << "Actual sugnature: " << std::endl;
+               dump_array(signature, sizeof(entry.sign));
+
                Gost12S512DlCleanup( dl_handle );
                in_file.close();
                return 5;

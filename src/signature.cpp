@@ -91,7 +91,7 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     }
 
     export_integer<signature_size / 2>(r, signature);
-    export_integer<signature_size / 2>(r, signature + signature_size / 2);
+    export_integer<signature_size / 2>(s, signature + signature_size / 2);
 
     std::cout << "Done!" << std::endl;
 

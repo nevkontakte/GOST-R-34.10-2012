@@ -1,6 +1,10 @@
 #include <iostream>
 #include <sign_engine.h>
 
+Gost12S512Status Gost12S512Init() {
+    return kStatusInternalError;
+}
+
 Gost12S512Status Gost12S512Sign( const char* privateKey,
                                  const char* rand,
                                  const char* hash,

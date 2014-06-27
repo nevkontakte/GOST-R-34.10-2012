@@ -1,3 +1,5 @@
+#include <curve.h>
+
 #include <iostream>
 #include <sign_engine.h>
 

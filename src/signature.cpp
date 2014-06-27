@@ -7,6 +7,7 @@ using namespace CryptoPP;
 namespace gost_ecc {
 
 static const std::size_t private_key_size = 64;
+static const std::size_t public_key_size = 64;
 static const std::size_t rand_size = 64;
 static const std::size_t hash_size = 64;
 static const std::size_t signature_size = 64 * 2;
@@ -116,6 +117,36 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
 #endif
 
     return kStatusOk;
+}
+
+Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_key_y, const byte* hash, const byte* signature) {
+    Integer r = import_integer<signature_size / 2>(signature);
+    Integer s = import_integer<signature_size / 2>(signature + signature_size / 2);
+
+    Integer alpha = import_integer<hash_size>(hash);
+
+    Integer e = this->subgroup.ConvertIn(alpha);
+    if (e == 0) {
+        e = 1;
+    }
+
+    Integer v = this->subgroup.MultiplicativeInverse(e);
+
+    Integer z_1 = this->subgroup.Multiply(s, v);
+    Integer z_2 = this->subgroup.Multiply(r, v);
+    z_2 = this->subgroup.Inverse(z_2);
+
+    ECPPoint Q(import_integer<public_key_size>(public_key_x), import_integer<public_key_size>(public_key_y));
+
+    ECPPoint C = this->curve.Add(this->curve.ScalarMultiply(this->basePoint, z_1), this->curve.ScalarMultiply(Q, z_2));
+
+    Integer R = this->subgroup.ConvertIn(C.x);
+
+    if (R == r) {
+        return kStatusOk;
+    } else {
+        return kStatusWrongSignature;
+    }
 }
 
 }

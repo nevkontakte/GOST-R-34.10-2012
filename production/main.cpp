@@ -29,5 +29,8 @@ Gost12S512Status Gost12S512Verify( const char* publicKeyX,
                                    const char* publicKeyY,
                                    const char* hash,
                                    const char* signature ) {
-    return kStatusInternalError;
+    return s->verify(reinterpret_cast<const byte*>(publicKeyX),
+                   reinterpret_cast<const byte*>(publicKeyY),
+                   reinterpret_cast<const byte*>(hash),
+                   reinterpret_cast<const byte*>(signature));
 }

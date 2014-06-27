@@ -1,0 +1,64 @@
+
+COMPONENT=signature_contest
+
+export COMPONENT_ROOT = $(shell until [ -d $(COMPONENT) ]; do cd ..; done; cd $(COMPONENT) ; pwd)
+export RESULT_DIR = $(shell cd $(COMPONENT_ROOT)/..; pwd)/_result
+
+
+include $(COMPONENT_ROOT)/Makefile.defs
+include $(COMPONENT_ROOT)/platform.options
+
+
+export INCLUDE_DIR = $(RESULT_DIR)/include
+export PLATFORM = $(HOST)/$(shell $(CXX) --version | head -n1 | sed 's/[\(\)]//g' | sed 's/ /_/g')
+export OBJ_DIR = $(RESULT_DIR)/$(PLATFORM)/temp
+export LIB_DIR = $(RESULT_DIR)/$(PLATFORM)/lib
+export BIN_DIR = $(RESULT_DIR)/$(PLATFORM)/bin
+export COMPONENT_SELF_INCLUDE_DIR = $(shell cd $(COMPONENT_ROOT)/.. ; pwd)
+
+
+COMMON_FLAGS = -I$(INCLUDE_DIR) -I$(COMPONENT_SELF_INCLUDE_DIR) -Wall -O3
+
+
+export CFLAGS = $(COMMON_FLAGS) $(CFLAGS_external)
+export CXXFLAGS = $(COMMON_FLAGS) $(CXXFLAGS_external)
+export ARFLAGS = rcs
+
+# Jobserver needs to be disabled here with -j 1, because dependecies can't
+# be built simultaneously: the list of libraries is created using simple
+# echo to stdout, and when several targets are built at the same time,
+# the output gets mixed unpredicably. This results in the order of libraries
+# being different for each build, and thus in different checksums of the binary,
+# because ld inserts libraries into .dynamic section in the order they were
+# given by the user. --vel
+BEGINDEP = echo -L$(LIB_DIR); cd $(COMPONENT_ROOT); make -j 1 -f libdep.make
+ENDDEP = | grep -v ^make | tac; echo -lstdc++ -lpthread -lm
+libdep = $(shell $(BEGINDEP) $(1) $(ENDDEP))
+libdep_st = $(shell $(BEGINDEP) STATIC_LIBS=1 $(1) $(ENDDEP))
+
+ifdef NOCOLOR
+E1              =
+E2              =
+else
+E1              = \\033[1;39m
+E2              = \\033[0;39m
+endif
+
+define RECURSIVE_MAKE
+@list='$(1)'; \
+        for subdir in $$list; do \
+                echo -e "make: $(E1)$(2) in $$subdir$(E2)"; \
+                echo -e "$(MAKE) -C $$subdir $(2)"; \
+                $(MAKE) -C $$subdir $(2) || exit 1; \
+        done
+endef
+
+define SEQ_MAKE
+@list='$(1)'; \
+        for target in $$list; do \
+                echo -e "make target: $(E1)$$target$(E2)"; \
+                echo -e "$(MAKE) $(2) $$target"; \
+                $(MAKE) $(2) $$target || exit 1; \
+        done
+endef
+

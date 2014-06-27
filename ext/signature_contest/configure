@@ -1,0 +1,161 @@
+#!/bin/bash
+
+
+
+# NOTE: This requires GNU getopt.  On Mac OS X, you get BSD getopt by default,
+# which doesn't work. On Mac OS X you need to install MacPorts (http://www.macports.org)
+# and then do sudo port install getopt to install GNU getopt (usually into /opt/local/bin),
+# and make sure that /opt/local/bin is in your shell path ahead of /usr/bin
+
+
+#TEMP=`getopt -o vdm: --long verbose,debug,memory:,debugfile:,minheap:,maxheap: \
+#             -n 'javawrap' -- "$@"`
+TEMP=`getopt -o h: --long help,CC:,CFLAGS:,CXX:,CXXFLAGS:,LDFLAGS:,prefix:,bindir:,includedir:,host:,build:,AR:,STRIP:,RANLIB:,READELF: -- "$@"`
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+PREFIX="/usr/local"
+BIN_DIR="$PREFIX/bin"
+INCLUDE_DIR="$PREFIX/include/signature_contest"
+HOST=`uname -m`
+BUILD=`uname -m`
+
+CONFIGURE_HOST_OPT=
+
+
+CC=gcc
+CFLAGS=
+CXX=g++
+CXXFLAGS=
+LD=ld
+LDFLAGS=
+
+# other binutils tools
+AR=ar
+STRIP=strip
+RANLIB=ranlib
+READELF=readelf
+
+
+
+print_help=false
+
+
+while true; do
+  case "$1" in
+    -h | --help ) print_help=true; shift ;;
+    --prefix ) mkdir -p $2; BIN_DIR=`realpath $2`/bin; INCLUDE_DIR=`realpath $2`/include/signature_contest; shift 2 ;;
+    --bindir ) mkdir -p $2; BIN_DIR=`realpath $2`; shift 2 ;;
+    --includedir ) INCLUDE_DIR=`realpath $2`/signature_contest; shift 2 ;;
+    --host ) HOST=$2; CONFIGURE_HOST_OPT="--host=$HOST" ; shift 2 ;;
+    --build ) BUILD=$2; shift 2 ;;
+    --CC ) CC=$2; shift 2 ;;
+    --CFLAGS ) CFLAGS=$2; shift 2 ;;
+    --CXX ) CXX=$2; shift 2 ;;
+    --CXXFLAGS ) CXXFLAGS=$2; shift 2 ;;
+    --LD ) LD=$2; shift 2 ;;
+    --LDFLAGS ) LDFLAGS=$2; shift 2 ;;
+    --AR ) AR=$2; shift 2 ;;
+    --STRIP ) STRIP=$2; shift 2 ;;
+    --RANLIB ) RANLIB=$2; shift 2 ;;
+    --READELF ) READELF=$2; shift 2 ;;
+    -- ) shift; break ;;
+    * ) echo $1 break ;;
+  esac
+done
+
+
+
+
+
+
+if test "$print_help" = "true"; then
+  cat <<EOF
+\`configure' configures this package to adapt to many kinds of systems.
+
+Usage: $0 [OPTION]... [--VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+--VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets.
+
+Configuration:
+  -h, --help              display this help and exit
+
+
+EOF
+
+  cat <<EOF
+Installation directories:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [$PREFIX]
+  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+                          [PREFIX]
+
+By default, \`make install' will install all the files in
+\`$PREFIX/bin', \`$PREFIX/bin' etc.  You can specify
+an installation prefix other than \`$PREFIX' using \`--prefix',
+for instance \`--prefix=\$HOME'.
+
+For better control, use the options below.
+
+Fine tuning of the installation directories:
+  --bindir=DIR           user executables [PREFIX/bin]
+  --includedir=DIR       C header files [PREFIX/include]
+EOF
+
+   cat <<EOF
+
+System types:
+  --build=BUILD     configure for building on BUILD [guessed]
+  --host=HOST       build programs to run on HOST [BUILD]
+
+Optional Features:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+
+Some influential environment variables:
+  CC          C compiler command
+  CFLAGS      C compiler flags
+  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+              nonstandard directory <lib dir>
+  CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
+              headers in a nonstandard directory <include dir>
+  CPP         C preprocessor
+  CXX         C++ compiler command
+  CXXFLAGS    C++ compiler flags
+
+Use these variables to override the choices made by \`configure' or to help
+it to find libraries and programs with nonstandard names/locations.
+EOF
+exit 0
+fi
+
+
+
+cat > platform.options <<EOF
+export INSTALL_BIN_DIR=$BIN_DIR
+export INSTALL_INCLUDE_DIR=$INCLUDE_DIR
+
+export HOST=$HOST
+export BUILD=$BUILD
+export CONFIGURE_HOST_OPT=$CONFIGURE_HOST_OPT
+
+
+export CC=$CC
+export CFLAGS_external=$CFLAGS
+export CXX=$CXX
+export CXXFLAGS_external=$CXXFLAGS
+export LD=$LD
+export LDFLAGS_external=$LDFLAGS
+
+export AR=$AR
+export STRIP=$STRIP
+export RANLIB=$RANLIB
+export READELF=$READELF
+
+EOF
+

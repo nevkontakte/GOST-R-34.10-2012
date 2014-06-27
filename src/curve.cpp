@@ -2,6 +2,7 @@
 
 using namespace std;
 
+namespace gost_ecc {
 uint64_t p[8] = // 2^512 - 569
 {0xFFFFFFFFFFFFFDC7,
  0xFFFFFFFFFFFFFFFF,
@@ -64,7 +65,7 @@ uint64_t y[8]=
  0xA8EA0F97A29128BA,
  0x203C4DDD6567E36E};
 
-uint16_t x0[8] =
+uint64_t x0[8] =
 {0x0000000000000003,
  0x0000000000000000,
  0x0000000000000000,
@@ -83,3 +84,5 @@ uint64_t y0[8] =
  0xCE5E1C93ACF1ABC1,
  0xA61B8816E25450E6,
  0x7503CFE87A836AE3};
+
+}

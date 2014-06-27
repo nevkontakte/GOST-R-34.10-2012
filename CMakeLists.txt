@@ -6,7 +6,10 @@ add_definitions(-std=c++11)
 aux_source_directory(src SRC_LIST)
 include_directories(include)
 
+find_library(CRYPTOPP_LIBRARY cryptopp)
+
 add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
+target_link_libraries(${PROJECT_NAME} ${CRYPTOPP_LIBRARY})
 
 include(ExternalProject)
 

@@ -4,12 +4,18 @@ cmake_minimum_required(VERSION 2.8)
 add_definitions(-std=c++11)
 
 aux_source_directory(src SRC_LIST)
+aux_source_directory(test TEST_SRC_LIST)
+aux_source_directory(production PRODUCTION_SRC_LIST)
+
 include_directories(include)
 
 find_library(CRYPTOPP_LIBRARY cryptopp)
 
-add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
+add_library(${PROJECT_NAME} SHARED ${SRC_LIST} ${PRODUCTION_SRC_LIST})
 target_link_libraries(${PROJECT_NAME} ${CRYPTOPP_LIBRARY})
+
+add_executable(${PROJECT_NAME}_test ${SRC_LIST} ${TEST_SRC_LIST})
+target_link_libraries(${PROJECT_NAME}_test ${CRYPTOPP_LIBRARY})
 
 include(ExternalProject)
 

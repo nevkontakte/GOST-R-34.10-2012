@@ -21,14 +21,14 @@ public:
         :modulus(modulus)
     {}
 
-    integer_type add(const integer_type& left, const integer_type& right) {
+    integer_type add(const integer_type& left, const integer_type& right) const {
         double_integer_type sum;
         mp::add(sum, left, right);
 
         return static_cast<integer_type>(sum % this->modulus);
     }
 
-    integer_type sub(const integer_type& left, const integer_type& right) {
+    integer_type sub(const integer_type& left, const integer_type& right) const {
         double_integer_type sum = left;
 
         if (left < right) {
@@ -39,14 +39,14 @@ public:
         return static_cast<integer_type>(sum % this->modulus);
     }
 
-    integer_type mul(const integer_type& left, const integer_type& right) {
+    integer_type mul(const integer_type& left, const integer_type& right) const {
         double_integer_type sum;
         mp::multiply(sum, left, right);
 
         return static_cast<integer_type>(sum % this->modulus);
     }
 
-    integer_type mul_inverse(const integer_type& n) {
+    integer_type mul_inverse(const integer_type& n) const {
         return mp::powm(n, this->modulus - 2, this->modulus);
     }
 
@@ -59,6 +59,9 @@ public:
         return val;
     }
 };
+
+template <unsigned bits>
+using cpp_int_fixed = mp::number<mp::cpp_int_backend<bits, bits, mp::unsigned_magnitude, mp::unchecked, void> >;
 
 }
 #endif // PRIME_FIELD_H

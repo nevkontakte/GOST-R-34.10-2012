@@ -1,6 +1,7 @@
 #include <curve.h>
 #include <signature.h>
 #include <prime_field.h>
+#include <elliptic_curve.h>
 
 #include <iostream>
 
@@ -71,6 +72,27 @@ int main() {
 
         const mp::uint256_t inv = field.mul_inverse(left);
         ASSERT_TRUE(1 == field.mul(left, inv));
+    }
+
+    {
+        typedef elliptic_curve<mp::uint256_t, mp::uint512_t> ec;
+
+        ec curve(17, 2, 2);
+
+        ec::point left(16, 13);
+        ec::point right(3, 1);
+
+        ec::point result = curve.add(left, right);
+        ASSERT_TRUE(ec::point(7, 11) == result);
+
+        ASSERT_TRUE(ec::point(0, 11) == curve.twice(left));
+
+        ASSERT_TRUE(ec::point::inf == curve.add(ec::point::inf, ec::point::inf));
+        ASSERT_TRUE(right == curve.add(ec::point::inf, right));
+        ASSERT_TRUE(left == curve.add(left, ec::point::inf));
+        ASSERT_TRUE(ec::point::inf == curve.twice(ec::point::inf));
+
+        ASSERT_TRUE(ec::point(3, 1) == curve.mulScalar(ec::point(0, 6), 6));
     }
 
     signature s(p, a, b, q, x, y);

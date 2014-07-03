@@ -2,6 +2,7 @@ project(gost_ecc)
 cmake_minimum_required(VERSION 2.8)
 
 add_definitions(-std=c++11)
+add_definitions(-Wall -Werror -Wpedantic)
 
 aux_source_directory(src SRC_LIST)
 aux_source_directory(test TEST_SRC_LIST)

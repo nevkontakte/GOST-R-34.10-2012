@@ -41,8 +41,14 @@ const uint64_t rnd[8] =
  0x0000000000000000,
  0x0000000000000000};
 
-inline const byte* to_bytes(const uint64_t (&data)[8]) {
+template <unsigned n>
+inline const byte* to_bytes(const uint64_t (&data)[n]) {
     return reinterpret_cast<const byte*>(&data);
+}
+
+template <unsigned n>
+inline byte* to_bytes(uint64_t (&data)[n]) {
+    return reinterpret_cast<byte*>(&data);
 }
 
 using namespace mp;
@@ -56,8 +62,6 @@ int main() {
         mp::uint256_t right = pf::import_bytes(to_bytes(rnd));
 
         mp::uint256_t modulus = pf::import_bytes(to_bytes(p));
-
-        std::cout << std::hex << left << std::endl << right << std::endl << modulus << std::endl;
 
         pf field(modulus);
 
@@ -96,7 +100,29 @@ int main() {
     }
 
     signature s(p, a, b, q, x, y);
-    byte result[64*2];
-    std::cout << ">> Signing << " << std::endl;
-    s.sign(to_bytes(d), to_bytes(rnd), to_bytes(alpha), result);
+    uint64_t result[8 * 2];
+    s.sign(to_bytes(d), to_bytes(rnd), to_bytes(alpha), to_bytes(result));
+
+    uint64_t expected[8 * 2] = {
+        0x3ad043fd39dc0493,
+        0x74053554a42767b8,
+        0x80cd9ed56feda419,
+        0x41aa28d2f1ab1482,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x928014f6c5bf9c40,
+        0xbcd6d3f746b631df,
+        0x653c235a98a60249,
+        0x01456c64ba4642a1,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+    };
+
+    ASSERT_TRUE(std::equal(std::begin(expected), std::end(expected), std::begin(result)));
+
+    std::cout << "All tests passed!" << std::endl;
 }

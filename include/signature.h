@@ -3,16 +3,21 @@
 
 #include <sign_engine.h>
 
-#include <cryptopp/ecp.h>
+#include <elliptic_curve.h>
 #include <cstdint>
 
 namespace gost_ecc {
 
+using byte = unsigned char;
+
 class signature
 {
-    ::CryptoPP::ECP curve;
-    ::CryptoPP::ModularArithmetic subgroup;
-    ::CryptoPP::ECPPoint basePoint;
+    using ec = elliptic_curve<mp::uint512_t, mp::uint1024_t>;
+    using pf = prime_field<mp::uint512_t, mp::uint1024_t>;
+
+    ec curve;
+    pf subgroup;
+    ec::point basePoint;
 public:
     signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[8],
               u_int64_t (&subgroupModulus)[8],

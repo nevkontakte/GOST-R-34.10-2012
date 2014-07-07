@@ -2,47 +2,16 @@
 
 #include <iostream>
 
-using namespace CryptoPP;
-
 namespace gost_ecc {
 
-static const std::size_t private_key_size = 64;
-static const std::size_t public_key_size = 64;
-static const std::size_t rand_size = 64;
-static const std::size_t hash_size = 64;
-static const std::size_t signature_size = 64 * 2;
-
-// Convert Little-Endian representation into CryptoPP Integer object
-template<std::size_t size>
-inline Integer import_integer(byte* data) {
-    std::reverse(data, data + size);
-    return Integer(data, size);
-}
-
-template<std::size_t size>
-inline Integer import_integer(const byte* data) {
-    byte bytes[size];
-    std::copy(data, data + size, &bytes[0]);
-    return import_integer<size>(bytes);
-}
-
-inline Integer import_integer(u_int64_t (&data)[8]) {
-    byte* bytes = reinterpret_cast<byte*>(&data);
-    return import_integer<sizeof(data)>(bytes);
-}
-
-template<std::size_t size>
-inline void export_integer(const Integer& n, byte* output) {
-    n.Encode(output, size);
-    std::reverse(output, output + size);
-}
+const unsigned signature_size = 64 * 2;
 
 signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[8],
                      u_int64_t (&subgroupModulus)[8],
                      u_int64_t (&base_x)[8], u_int64_t (&base_y)[8])
-    :curve(import_integer(modulus), import_integer(a), import_integer(b)),
-      subgroup(import_integer(subgroupModulus)),
-      basePoint(import_integer(base_x), import_integer(base_y))
+    :curve(pf::import_bytes(modulus), pf::import_bytes(a), pf::import_bytes(b)),
+      subgroup(pf::import_bytes(subgroupModulus)),
+      basePoint(pf::import_bytes(base_x), pf::import_bytes(base_y))
 {
 #ifdef DEBUG
     std::cout << this->curve.GetField().GetModulus() << std::endl << std::endl
@@ -53,15 +22,15 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
 }
 
 Gost12S512Status signature::sign(const byte* private_key, const byte* rand, const byte* hash, byte* signature) {
-    Integer alpha = import_integer<hash_size>(hash);
-    Integer d = import_integer<private_key_size>(private_key);
+    pf::integer_type alpha = pf::import_bytes(hash);
+    pf::integer_type d = pf::import_bytes(private_key);
 
 #ifdef DEBUG
     std::cout << "alpha: " << alpha << std::endl;
     std::cout << "d: " << d << std::endl;
 #endif
 
-    Integer e = this->subgroup.ConvertIn(alpha);
+    pf::integer_type e = this->subgroup.acquire(alpha);
     if (e == 0) {
         e = 1;
     }
@@ -69,8 +38,8 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     std::cout << "e: " << e << std::endl;
 #endif
 
-    Integer k = import_integer<rand_size>(rand);
-    if(k >= this->subgroup.GetModulus()) {
+    pf::integer_type k = pf::import_bytes(rand);
+    if(k >= this->subgroup.modulus) {
         return kStatusBadInput;
     }
 
@@ -78,13 +47,13 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     std::cout << "k: " << k << std::endl;
 #endif
 
-    ECPPoint C = this->curve.ScalarMultiply(this->basePoint, k);
+    ec::point C = this->curve.mulScalar(this->basePoint, k);
 
 #ifdef DEBUG
     std::cout << "x_c: " << C.x << std::endl << "y_c: " << C.y << std::endl;
 #endif
 
-    Integer r = this->subgroup.ConvertIn(C.x);
+    pf::integer_type r = this->subgroup.acquire(C.x);
 
 #ifdef DEBUG
     std::cout << "r: " << r << std::endl;
@@ -94,9 +63,9 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
         return kStatusBadInput;
     }
 
-    Integer rd = this->subgroup.Multiply(r, d);
-    Integer ke = this->subgroup.Multiply(k, e);
-    Integer s = this->subgroup.Add(rd, ke);
+    pf::integer_type rd = this->subgroup.mul(r, d);
+    pf::integer_type ke = this->subgroup.mul(k, e);
+    pf::integer_type s = this->subgroup.add(rd, ke);
 
 #ifdef DEBUG
     std::cout << "rd: " << rd << std::endl;
@@ -109,8 +78,8 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
         return kStatusBadInput;
     }
 
-    export_integer<signature_size / 2>(r, signature);
-    export_integer<signature_size / 2>(s, signature + signature_size / 2);
+    pf::export_bytes(r, signature);
+    pf::export_bytes(s, signature + signature_size / 2);
 
 #ifdef DEBUG
     std::cout << "Done!" << std::endl;
@@ -120,27 +89,27 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
 }
 
 Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_key_y, const byte* hash, const byte* signature) {
-    Integer r = import_integer<signature_size / 2>(signature);
-    Integer s = import_integer<signature_size / 2>(signature + signature_size / 2);
+    pf::integer_type r = pf::import_bytes(signature);
+    pf::integer_type s = pf::import_bytes(signature + signature_size / 2);
 
-    Integer alpha = import_integer<hash_size>(hash);
+    pf::integer_type alpha = pf::import_bytes(hash);
 
-    Integer e = this->subgroup.ConvertIn(alpha);
+    pf::integer_type e = this->subgroup.acquire(alpha);
     if (e == 0) {
         e = 1;
     }
 
-    Integer v = this->subgroup.MultiplicativeInverse(e);
+    pf::integer_type v = this->subgroup.mul_inverse(e);
 
-    Integer z_1 = this->subgroup.Multiply(s, v);
-    Integer z_2 = this->subgroup.Multiply(r, v);
-    z_2 = this->subgroup.Inverse(z_2);
+    pf::integer_type z_1 = this->subgroup.mul(s, v);
+    pf::integer_type z_2 = this->subgroup.mul(r, v);
+    z_2 = this->subgroup.inverse(z_2);
 
-    ECPPoint Q(import_integer<public_key_size>(public_key_x), import_integer<public_key_size>(public_key_y));
+    ec::point Q(pf::import_bytes(public_key_x), pf::import_bytes(public_key_y));
 
-    ECPPoint C = this->curve.Add(this->curve.ScalarMultiply(this->basePoint, z_1), this->curve.ScalarMultiply(Q, z_2));
+    ec::point C = this->curve.add(this->curve.mulScalar(this->basePoint, z_1), this->curve.mulScalar(Q, z_2));
 
-    Integer R = this->subgroup.ConvertIn(C.x);
+    pf::integer_type R = this->subgroup.acquire(C.x);
 
     if (R == r) {
         return kStatusOk;

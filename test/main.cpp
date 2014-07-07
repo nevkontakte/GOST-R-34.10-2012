@@ -99,6 +99,16 @@ int main() {
         ASSERT_TRUE(ec::point(3, 1) == curve.mulScalar(ec::point(0, 6), 6));
     }
 
+    {
+        typedef prime_field<mp::uint512_t, mp::uint1024_t> pf;
+
+        pf field(pf::integer_type("57896044618658097711785492504343953926634992332820282019728792003956564821041"));
+        auto result = field.mul_inverse(pf::integer_type("8037948113078075006670898845874119551271478779811090161381958730426863132560"));
+        ASSERT_TRUE(pf::integer_type("10297018950366695783893339349991847804652198502529290759859202820577721280788") == result);
+    }
+
+    std::cout << "General test passed, testing signature..." << std::endl;
+
     signature s(p, a, b, q, x, y);
     uint64_t result[8 * 2];
     s.sign(to_bytes(d), to_bytes(rnd), to_bytes(alpha), to_bytes(result));

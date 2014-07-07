@@ -62,7 +62,6 @@ public:
     }
 
     integer_type mul_inverse(const integer_type& n) const {
-//        std::cout << n << " mod " << this->modulus << std::endl;
 
         integer_type s0 = 1, s1 = 0;
         integer_type r0 = n, r1 = this->modulus;
@@ -71,9 +70,8 @@ public:
         std::size_t i;
 
         for (i = 1; r1 != 0; i++) {
-//            std::cout << r0 << " / " <<  r1 << std::endl;
             mp::divide_qr(r0, r1, quotient, remainder);
-            r0 = this->sub(r0, this->mul(quotient, r1));
+            r0 = remainder;
             s0 = this->sub(s0, this->mul(quotient, s1));;
 
             std::swap(r0, r1);

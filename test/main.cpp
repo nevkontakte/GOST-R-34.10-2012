@@ -96,7 +96,7 @@ int main() {
     {
         typedef elliptic_curve<mp::uint256_t, mp::uint512_t> ec;
 
-        ec curve(17, 2, 2);
+        ec curve(17, 17-3, 2);
 
         ec::point left(16, 13);
         ec::point right(3, 1);
@@ -104,14 +104,15 @@ int main() {
         ec::point result = curve.add(left, right);
         ASSERT_TRUE(ec::point(7, 11) == result);
 
-        ASSERT_TRUE(ec::point(0, 11) == curve.twice(left));
+        ASSERT_TRUE(ec::point(2, 4) == curve.twice(left)); // 2 4
+        ASSERT_TRUE(ec::point(2, 4) == curve.twice(ec::jacobian_point(left)).to_affine(curve));
 
         ASSERT_TRUE(ec::point::inf == curve.add(ec::point::inf, ec::point::inf));
         ASSERT_TRUE(right == curve.add(ec::point::inf, right));
         ASSERT_TRUE(left == curve.add(left, ec::point::inf));
         ASSERT_TRUE(ec::point::inf == curve.twice(ec::point::inf));
 
-        ASSERT_TRUE(ec::point(3, 1) == curve.mulScalar(ec::point(0, 6), 6));
+        ASSERT_TRUE(ec::point(14, 16) == curve.mulScalar(ec::point(0, 6), 6));
     }
 
     {

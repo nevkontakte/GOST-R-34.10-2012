@@ -17,36 +17,71 @@ public:
         integer_type x;
         integer_type y;
 
-        bool is_infinity;
-
         point()
             :point(0, 0)
         {}
 
         point(integer_type x, integer_type y)
-            :x(x), y(y), is_infinity(false)
+            :x(x), y(y)
         {}
 
         bool operator ==(const point& that) const {
-            return (this->is_infinity == false && that.is_infinity == false && this->x == that.x && this->y == that.y) ||
-                    (this->is_infinity == true && that.is_infinity == true);
+            return (this->x == that.x && this->y == that.y);
         }
 
         static const point inf;
+    };
 
-    private:
-        point(bool infinity)
-            :is_infinity(infinity)
+    struct jacobian_point {
+        integer_type x;
+        integer_type y;
+        integer_type z;
+
+        jacobian_point()
+            :x(0),y(0),z(0)
         {}
+
+        jacobian_point(const integer_type& x, const integer_type& y, const integer_type& z = 1)
+            :x(x),y(y),z(z)
+        {}
+
+        jacobian_point(const point& affine)
+            :x(affine.x),y(affine.y),z(1)
+        {}
+
+        point to_affine(elliptic_curve& curve) const {
+            const field_type& f = curve.field;
+            integer_type inv_z = f.mul_inverse(this->z); // z^-1
+            integer_type inv_zz = f.mul(inv_z, inv_z); // z^-2
+            integer_type inv_zzz = f.mul(inv_zz, inv_z); // z^-3
+
+            return point(f.mul(this->x, inv_zz), f.mul(this->y, inv_zzz));
+        }
+
+        bool operator ==(const jacobian_point& that) const {
+            return (this->x == that.x && this->y == that.y && this->z == that.z);
+        }
+
+        const static jacobian_point inf;
     };
 
     const field_type field;
     const integer_type a;
     const integer_type b;
 
+protected:
+
+    const bool allow_jacobian;
+
+    const integer_type inv_2;
+
+public:
+
     elliptic_curve(integer_type modulus, integer_type a, integer_type b)
-        :field(modulus), a(a), b(b)
-    {}
+        :field(modulus), a(a), b(b), allow_jacobian(this->field.inverse(a) != 3),
+          inv_2(field.mul_inverse(2))
+    {
+    }
 
     point add(const point& left, const point& right) const {
         if (left == point::inf) {
@@ -85,6 +120,47 @@ public:
         return result;
     }
 
+    /**
+     * @brief Point doubling for Jacobian coordinates.
+     *
+     * See: Hankerson, D., Vanstone, S., & Menezes, A. (2004). Guide to elliptic curve cryptography.
+     * Page 91, alg. 3.21.
+     * @param p
+     * @return
+     */
+    jacobian_point twice(const jacobian_point& p) const {
+        if (this->allow_jacobian) {
+            throw std::invalid_argument("Parameter a for curve must be -3");
+        }
+
+        if (p == jacobian_point::inf) {
+            return p;
+        }
+
+        const field_type& f = this->field;
+        jacobian_point result;
+        integer_type t1, t2, t3;
+        t1          = f.mul(p.z, p.z);
+        t2          = f.sub(p.x, t1);
+        t1          = f.add(p.x, t1);
+        t2          = f.mul(t1, t2);
+        t2          = f.mul(3, t2);
+        result.y    = f.mul(2, p.y);
+        result.z    = f.mul(result.y, p.z);
+        result.y    = f.mul(result.y, result.y);
+        t3          = f.mul(result.y, p.x);
+        result.y    = f.mul(result.y, result.y);
+        result.y    = f.mul(result.y, this->inv_2);
+        result.x    = f.mul(t2, t2);
+        t1          = f.mul(2, t3);
+        result.x    = f.sub(result.x, t1);
+        t1          = f.sub(t3, result.x);
+        t1          = f.mul(t1, t2);
+        result.y    = f.sub(t1, result.y);
+
+        return result;
+    }
+
     point mulScalar(const point& p, const integer_type& multiplier) const {
         point result = point::inf;
 
@@ -108,10 +184,22 @@ public:
         }
         return out;
     }
+
+    friend std::ostream& operator<<(std::ostream& out, jacobian_point& p) {
+        if (p == jacobian_point::inf) {
+            out << "(inf, inf, inf)";
+        } else {
+            out << '(' << p.x << ", " << p.y << ", " << p.z << ')';
+        }
+        return out;
+    }
 };
 
 template <typename _integer_type, typename _double_integer_type>
-const typename elliptic_curve<_integer_type, _double_integer_type>::point elliptic_curve<_integer_type, _double_integer_type>::point::inf(true);
+const typename elliptic_curve<_integer_type, _double_integer_type>::point elliptic_curve<_integer_type, _double_integer_type>::point::inf(1, 0);
+
+template <typename _integer_type, typename _double_integer_type>
+const typename elliptic_curve<_integer_type, _double_integer_type>::jacobian_point elliptic_curve<_integer_type, _double_integer_type>::jacobian_point::inf(1, 1, 0);
 }
 
 #endif // ELLIPTIC_CURVE_H

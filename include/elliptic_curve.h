@@ -78,7 +78,7 @@ protected:
 public:
 
     elliptic_curve(integer_type modulus, integer_type a, integer_type b)
-        :field(modulus), a(a), b(b), allow_jacobian(this->field.inverse(a) != 3),
+        :field(modulus), a(a), b(b), allow_jacobian(this->field.inverse(a) == 3),
           inv_2(field.mul_inverse(2))
     {
     }
@@ -129,7 +129,7 @@ public:
      * @return
      */
     jacobian_point twice(const jacobian_point& p) const {
-        if (this->allow_jacobian) {
+        if (!this->allow_jacobian) {
             throw std::invalid_argument("Parameter a for curve must be -3");
         }
 

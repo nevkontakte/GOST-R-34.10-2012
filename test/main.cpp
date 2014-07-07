@@ -41,6 +41,19 @@ const uint64_t rnd[8] =
  0x0000000000000000,
  0x0000000000000000};
 
+const uint64_t x_q[8] =
+{0x6689dbd8e56fd80b,
+ 0x8585ba1d4e9b788f,
+ 0xd8595bec458b50c5,
+ 0x7f2b49e270db6d90};
+
+const uint64_t y_q[8] =
+{0xdffb101a87ff77da,
+ 0xaf64d1c593d26627,
+ 0x85c8413a977b3cbb,
+ 0x26f1b489d6701dd1};
+
+
 template <unsigned n>
 inline const byte* to_bytes(const uint64_t (&data)[n]) {
     return reinterpret_cast<const byte*>(&data);
@@ -145,6 +158,8 @@ int main() {
     };
 
     ASSERT_TRUE(std::equal(std::begin(expected), std::end(expected), std::begin(result)));
+
+    ASSERT_TRUE(s.verify(to_bytes(x_q), to_bytes(y_q), to_bytes(alpha), to_bytes(result)) == kStatusOk);
 
     std::cout << "All tests passed!" << std::endl;
 }

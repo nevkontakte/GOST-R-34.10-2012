@@ -32,7 +32,11 @@ public:
         double_integer_type sum;
         mp::add(sum, left, right);
 
-        return static_cast<integer_type>(sum % this->modulus);
+        if (sum > this->modulus) {
+            sum -= this->modulus;
+        }
+
+        return static_cast<integer_type>(sum);
     }
 
     integer_type sub(const integer_type& left, const integer_type& right) const {
@@ -43,7 +47,7 @@ public:
         }
         sum -= right;
 
-        return static_cast<integer_type>(sum % this->modulus);
+        return static_cast<integer_type>(sum);
     }
 
     integer_type inverse(const integer_type& n) const {

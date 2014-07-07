@@ -63,6 +63,8 @@ int main() {
 
         mp::uint256_t modulus = pf::import_bytes(to_bytes(p));
 
+        ASSERT_TRUE(modulus == mp::uint256_t("0x8000000000000000000000000000000000000000000000000000000000000431"));
+
         pf field(modulus);
 
         const mp::uint256_t sum("0x250c1e4e93956d23b0e4652250bb41b53c353b3f9a5dae74b7da78acbfe12567");
@@ -102,7 +104,17 @@ int main() {
     {
         typedef prime_field<mp::uint512_t, mp::uint1024_t> pf;
 
-        pf field(pf::integer_type("57896044618658097711785492504343953926634992332820282019728792003956564821041"));
+        uint64_t m[8] = {
+            0x0000000000000431,
+            0x0000000000000000,
+            0x0000000000000000,
+            0x8000000000000000,
+            0x0000000000000000,
+            0x0000000000000000,
+            0x0000000000000000,
+            0x0000000000000000,
+        };
+        pf field(pf::import_bytes(m));
         auto result = field.mul_inverse(pf::integer_type("8037948113078075006670898845874119551271478779811090161381958730426863132560"));
         ASSERT_TRUE(pf::integer_type("10297018950366695783893339349991847804652198502529290759859202820577721280788") == result);
     }

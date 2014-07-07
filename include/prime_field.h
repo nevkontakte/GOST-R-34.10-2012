@@ -58,35 +58,40 @@ public:
     }
 
     integer_type mul_inverse(const integer_type& n) const {
-        std::cout << n << " mod " << this->modulus << std::endl;
+//        std::cout << n << " mod " << this->modulus << std::endl;
 
-        cyclic_array<integer_type, 200> s{1, 0};
-        cyclic_array<integer_type, 200> r{n, this->modulus};
+        integer_type s0 = 1, s1 = 0;
+        integer_type r0 = n, r1 = this->modulus;
         integer_type quotient, remainder;
 
         std::size_t i;
 
-        for (i = 1; r[i] != 0; i++) {
-            std::cout << r[i-1] << " / " <<  r[i] << std::endl;
-            mp::divide_qr(r[i-1], r[i], quotient, remainder);
-            r[i+1] = this->sub(r[i-1], this->mul(quotient, r[i]));
-            s[i+1] = this->sub(s[i-1], this->mul(quotient, s[i]));;
+        for (i = 1; r1 != 0; i++) {
+//            std::cout << r0 << " / " <<  r1 << std::endl;
+            mp::divide_qr(r0, r1, quotient, remainder);
+            r0 = this->sub(r0, this->mul(quotient, r1));
+            s0 = this->sub(s0, this->mul(quotient, s1));;
+
+            std::swap(r0, r1);
+            std::swap(s0, s1);
         }
 
-        if (r[i-1] != 1) {
+        if (r0 != 1) {
             throw std::invalid_argument("Provided number isn't inversible by specified modulus.");
         }
 
-        return s[i-1];
+        return s0;
     }
 
     template<typename T>
     static integer_type import_bytes(const T* data) {
         const mp::limb_type* src = reinterpret_cast<const mp::limb_type*>(data);
 
-        integer_type val;
-        val.backend().resize(bits,bits);
-        std::copy(src, src + val.backend().size(), val.backend().limbs());
+        integer_type val = 0;
+        for (unsigned i = 0; i < bits / (sizeof(mp::limb_type) * 8); i++) {
+            val += integer_type(src[i]) << (i * sizeof(mp::limb_type) * 8);
+        }
+
         return val;
     }
 
@@ -94,7 +99,12 @@ public:
     static T* export_bytes(integer_type val, T* data) {
         mp::limb_type* dst = reinterpret_cast<mp::limb_type*>(data);
 
-        std::copy(val.backend().limbs(), val.backend().limbs() + val.backend().size(), dst);
+        mp::limb_type* limbs = val.backend().limbs();
+        unsigned limb_number = val.backend().size();
+        unsigned limb_limit = bits / (sizeof(mp::limb_type) * 8);
+
+        std::copy(limbs, limbs + limb_number, dst);
+        std::fill_n(dst + limb_number, limb_limit - limb_number, 0);
         return data;
     }
 };

@@ -14,10 +14,10 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
       basePoint(pf::import_bytes(base_x), pf::import_bytes(base_y))
 {
 #ifdef DEBUG
-    std::cout << this->curve.GetField().GetModulus() << std::endl << std::endl
-                 << this->curve.GetA() << std::endl << this->curve.GetB() << std::endl << std::endl
-                    << this->subgroup.GetModulus() << std::endl << std::endl
-                       << this->basePoint.x << std::endl << this->basePoint.y << std::endl << std::endl;
+    std::cout << "p: " << this->curve.field.modulus << std::endl
+                 << "a: " << this->curve.a << std::endl << "b: " << this->curve.b << std::endl
+                    << "m: " << this->subgroup.modulus << std::endl
+                       << "x_p: " << this->basePoint.x << std::endl << "y_p: " << this->basePoint.y << std::endl << std::endl;
 #endif
 }
 
@@ -82,6 +82,8 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     pf::export_bytes(s, signature + signature_size / 2);
 
 #ifdef DEBUG
+    std::cout << std::hex << r << std::endl << s << std::endl;
+
     std::cout << "Done!" << std::endl;
 #endif
 

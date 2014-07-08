@@ -16,9 +16,9 @@ public:
     typedef _integer_type integer_type;
     typedef _double_integer_type double_integer_type;
 
-    static const unsigned pseudo_mersenne_limit = 1024;
+    static const unsigned pseudo_mersenne_limit;
 
-    static const std::size_t bits = integer_type::backend_type::internal_limb_count * integer_type::backend_type::limb_bits;
+    static const std::size_t bits;
 
     const integer_type modulus;
 
@@ -157,6 +157,12 @@ public:
 
 template <unsigned bits>
 using cpp_int_fixed = mp::number<mp::cpp_int_backend<bits, bits, mp::unsigned_magnitude, mp::unchecked, void> >;
+
+template <typename _integer_type, typename _double_integer_type>
+const std::size_t prime_field<_integer_type, _double_integer_type>::bits = _integer_type::backend_type::internal_limb_count * _integer_type::backend_type::limb_bits;
+
+template <typename _integer_type, typename _double_integer_type>
+const unsigned prime_field<_integer_type, _double_integer_type>::pseudo_mersenne_limit = 1024;
 
 }
 #endif // PRIME_FIELD_H

@@ -226,7 +226,7 @@ public:
      * @param count
      * @return
      */
-    jacobian_point repeated_twice(const jacobian_point& p, unsigned count) {
+    jacobian_point repeated_twice(const jacobian_point& p, unsigned count) const {
         if (p == jacobian_point::inf) {
             return jacobian_point::inf;
         }
@@ -244,15 +244,11 @@ public:
             a           = f.mul(result.x, result.x); // a = X^2
             a           = f.sub(a, w); // a = X^2 - W
             a           = f.mul(3, a); // a = 3 (X^2 - W)
-            std::cout << "a: " << a << std::endl;
 
             y_squared   = f.mul(result.y, result.y);
             b           = f.mul(result.x, y_squared); // B = X Y^2
-            std::cout << "b: " << a << std::endl;
             result.x    = f.sub(f.mul(a, a), f.mul(2, b)); // X = A^2 - 2B
             result.z    = f.mul(result.z, result.y); // Z = ZY
-            std::cout << "x: " << result.x << std::endl;
-            std::cout << "z: " << result.z << std::endl;
 
             count--;
 
@@ -266,8 +262,6 @@ public:
             result.y = f.mul(a, result.y); // A(B - X)
             result.y = f.mul(2, result.y); // 2A (B - X)
             result.y = f.sub(result.y, y_squared); // Y = 2A (B - X) - Y^4
-
-            std::cout << "y: " << result.y << std::endl;
         }
 
         result.y = f.mul(result.y, this->inv_2);
@@ -282,6 +276,7 @@ public:
 
         for (unsigned i = total_bits; i > 0; i--) {
             result = this->twice(result);
+
             if (mp::bit_test(multiplier, i - 1)) {
                 result = this->add(result, p);
             }

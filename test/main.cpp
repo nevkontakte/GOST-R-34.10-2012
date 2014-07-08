@@ -94,6 +94,16 @@ int main() {
     }
 
     {
+        typedef prime_field<mp::uint512_t, mp::uint1024_t> pf;
+
+        pf::integer_type modulus ("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDC7");
+        pf field(modulus); // 2^512 - 569
+        const pf::double_integer_type n ("0x67D4C9B41F674164FA6D707CC77486E71A2ED5149776F56514827F17A7990E30FAD580DFDFF4BE1E81975E3057D97AB43AC359645A234581805C4FE6FE51ED1BA241600EE7716F6C73D7EE518FAE0FEB0F89E9FBA5F9B3FD6781F6B5A006C5E7342DF0D67A31279EC44C26AE4D0D537F7AA592E39DEB5DF61E296EF605FA8BA9");
+        const pf::integer_type expected ("0x6A35B168B3F1C8DD1116F3A8E1ADE79441A184C04D6121A7FD8E7249233750C4B8B9626F412BB96CCDBC80218F6F0E1616D742EFF650DACC6B5707614A148E1B");
+        ASSERT_TRUE(expected == field.reduce(n))
+    }
+
+    {
         typedef elliptic_curve<mp::uint256_t, mp::uint512_t> ec;
 
         ec curve(17, 17-3, 2);
@@ -103,6 +113,7 @@ int main() {
 
         ec::point result = curve.add(left, right);
         ASSERT_TRUE(ec::point(7, 11) == result);
+        ASSERT_TRUE(ec::point(7, 11) == curve.add(ec::jacobian_point(left), right).to_affine(curve));
 
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(left)); // 2 4
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(ec::jacobian_point(left)).to_affine(curve));

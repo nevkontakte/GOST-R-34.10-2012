@@ -49,7 +49,7 @@ public:
             :x(affine.x),y(affine.y),z(1)
         {}
 
-        point to_affine(elliptic_curve& curve) const {
+        point to_affine(const elliptic_curve& curve) const {
             const field_type& f = curve.field;
             integer_type inv_z = f.mul_inverse(this->z); // z^-1
             integer_type inv_zz = f.mul(inv_z, inv_z); // z^-2
@@ -161,8 +161,64 @@ public:
         return result;
     }
 
+    /**
+     * @brief Point addition for mixed Jacobian-affine coordinates.
+     *
+     * See: Hankerson, D., Vanstone, S., & Menezes, A. (2004). Guide to elliptic curve cryptography.
+     * Page 91, alg. 3.22.
+     * @param left
+     * @param right
+     * @return
+     */
+    jacobian_point add(const jacobian_point& left, const point& right) const {
+        if (!this->allow_jacobian) {
+            throw std::invalid_argument("Parameter a for curve must be -3");
+        }
+
+        if (left == jacobian_point::inf) {
+            return right;
+        } else if (right == point::inf) {
+            return left;
+        }
+
+        const field_type& f = this->field;
+
+        jacobian_point result;
+        integer_type t1, t2, t3, t4;
+
+        t1 = f.mul(left.z, left.z);
+        t2 = f.mul(t1, left.z);
+        t1 = f.mul(t1, right.x);
+        t2 = f.mul(t2, right.y);
+        t1 = f.sub(t1, left.x);
+        t2 = f.sub(t2, left.y);
+
+        if (t1 == 0) {
+            if (t2 == 0) {
+                return this->twice(jacobian_point(right));
+            } else {
+                return jacobian_point::inf;
+            }
+        }
+
+        result.z    = f.mul(left.z, t1);
+        t3          = f.mul(t1, t1);
+        t4          = f.mul(t3, t1);
+        t3          = f.mul(t3, left.x);
+        t1          = f.mul(2, t3);
+        result.x    = f.mul(t2, t2);
+        result.x    = f.sub(result.x, t1);
+        result.x    = f.sub(result.x, t4);
+        t3          = f.sub(t3, result.x);
+        t3          = f.mul(t3, t2);
+        t4          = f.mul(t4, left.y);
+        result.y    = f.sub(t3, t4);
+
+        return result;
+    }
+
     point mulScalar(const point& p, const integer_type& multiplier) const {
-        point result = point::inf;
+        jacobian_point result = jacobian_point::inf;
 
         unsigned total_bits = multiplier.backend().size() * sizeof(mp::limb_type) * 8;
 
@@ -173,7 +229,7 @@ public:
             }
         }
 
-        return result;
+        return result.to_affine(*this);
     }
 
     friend std::ostream& operator<<(std::ostream& out, point& p) {

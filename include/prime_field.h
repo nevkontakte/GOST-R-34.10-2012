@@ -16,13 +16,32 @@ public:
     typedef _integer_type integer_type;
     typedef _double_integer_type double_integer_type;
 
+    static const unsigned pseudo_mersenne_limit = 1024;
+
     static const std::size_t bits = integer_type::backend_type::internal_limb_count * integer_type::backend_type::limb_bits;
 
     const integer_type modulus;
 
+protected:
+
+    enum { rGeneric, rPseudoMersenne } reduction_type;
+
+    union {
+        struct {
+            unsigned remainder;
+        } pm;
+    } modulus_aux;
+
+public:
+
     prime_field(integer_type modulus)
-        :modulus(modulus)
-    {}
+        :modulus(modulus), reduction_type(rGeneric)
+    {
+        if ((~modulus) < pseudo_mersenne_limit) {
+            this->reduction_type = rPseudoMersenne;
+            this->modulus_aux.pm.remainder = static_cast<unsigned>(~modulus) + 1;
+        }
+    }
 
     integer_type acquire(const integer_type& n) const {
         return n % this->modulus;
@@ -58,7 +77,32 @@ public:
         double_integer_type sum;
         mp::multiply(sum, left, right);
 
-        return static_cast<integer_type>(sum % this->modulus);
+        return this->reduce(sum);
+    }
+
+    integer_type reduce(const double_integer_type& n) const {
+        if (this->reduction_type == rPseudoMersenne) {
+            static const double_integer_type mask = (double_integer_type(1) << bits) - 1;
+
+            double_integer_type q = n >> bits;
+            double_integer_type r = n & mask;
+
+            double_integer_type cq;
+
+            for (unsigned i = 0; (q > 0) && (i < 2); i++) {
+                cq = this->modulus_aux.pm.remainder * q;
+                r += cq & mask;
+                q = cq >> bits;
+            }
+
+            while (r >= this->modulus) {
+                r -= this->modulus;
+            }
+
+            return static_cast<integer_type>(r);
+        } else {
+            return static_cast<integer_type>(n % this->modulus);
+        }
     }
 
     integer_type mul_inverse(const integer_type& n) const {

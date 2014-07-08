@@ -117,6 +117,8 @@ int main() {
 
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(left)); // 2 4
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(ec::jacobian_point(left)).to_affine(curve));
+        ASSERT_TRUE(ec::point(2, 4) == curve.repeated_twice(ec::jacobian_point(left), 1).to_affine(curve));
+        ASSERT_TRUE(curve.twice(ec::point(2, 4)) == curve.repeated_twice(ec::jacobian_point(left), 2).to_affine(curve));
 
         ASSERT_TRUE(ec::point::inf == curve.add(ec::point::inf, ec::point::inf));
         ASSERT_TRUE(right == curve.add(ec::point::inf, right));

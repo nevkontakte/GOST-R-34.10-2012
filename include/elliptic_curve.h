@@ -144,11 +144,11 @@ public:
         t2          = f.sub(p.x, t1);
         t1          = f.add(p.x, t1);
         t2          = f.mul(t1, t2);
-        t2          = f.mul(3, t2);
-        result.y    = f.mul(2, p.y);
+        t2          = f.mul(3, t2); // A = 3 (X1 - Z1^2) (X1 + Z1^2)
+        result.y    = f.mul(2, p.y); // B = 2Y1
         result.z    = f.mul(result.y, p.z);
-        result.y    = f.mul(result.y, result.y);
-        t3          = f.mul(result.y, p.x);
+        result.y    = f.mul(result.y, result.y); // C = B^2
+        t3          = f.mul(result.y, p.x); // D = CX1
         result.y    = f.mul(result.y, result.y);
         result.y    = f.mul(result.y, this->inv_2);
         result.x    = f.mul(t2, t2);
@@ -217,6 +217,64 @@ public:
         return result;
     }
 
+    /**
+     * @brief Repeated doubling algorithm.
+     *
+     * See: Hankerson, D., Vanstone, S., & Menezes, A. (2004). Guide to elliptic curve cryptography.
+     * Page 93, alg. 3.23.
+     * @param p
+     * @param count
+     * @return
+     */
+    jacobian_point repeated_twice(const jacobian_point& p, unsigned count) {
+        if (p == jacobian_point::inf) {
+            return jacobian_point::inf;
+        }
+
+        jacobian_point result = p;
+        const field_type& f = this->field;
+
+        integer_type a, b, w, y_squared, t1, t2;
+
+        result.y    = f.mul(2, result.y); // Y <- 2Y
+        w           = f.mul(result.z, result.z);
+        w           = f.mul(w, w); // W <- Z^4
+
+        while (count > 0) {
+            a           = f.mul(result.x, result.x); // a = X^2
+            a           = f.sub(a, w); // a = X^2 - W
+            a           = f.mul(3, a); // a = 3 (X^2 - W)
+            std::cout << "a: " << a << std::endl;
+
+            y_squared   = f.mul(result.y, result.y);
+            b           = f.mul(result.x, y_squared); // B = X Y^2
+            std::cout << "b: " << a << std::endl;
+            result.x    = f.sub(f.mul(a, a), f.mul(2, b)); // X = A^2 - 2B
+            result.z    = f.mul(result.z, result.y); // Z = ZY
+            std::cout << "x: " << result.x << std::endl;
+            std::cout << "z: " << result.z << std::endl;
+
+            count--;
+
+            y_squared   = f.mul(y_squared, y_squared); // y_squared = Y^4
+
+            if (count > 0) {
+                w = f.mul(w, y_squared); // W = W Y^4
+            }
+
+            result.y = f.sub(b, result.x); // B - X
+            result.y = f.mul(a, result.y); // A(B - X)
+            result.y = f.mul(2, result.y); // 2A (B - X)
+            result.y = f.sub(result.y, y_squared); // Y = 2A (B - X) - Y^4
+
+            std::cout << "y: " << result.y << std::endl;
+        }
+
+        result.y = f.mul(result.y, this->inv_2);
+
+        return result;
+    }
+
     point mulScalar(const point& p, const integer_type& multiplier) const {
         jacobian_point result = jacobian_point::inf;
 
@@ -232,7 +290,7 @@ public:
         return result.to_affine(*this);
     }
 
-    friend std::ostream& operator<<(std::ostream& out, point& p) {
+    friend std::ostream& operator<<(std::ostream& out, const point& p) {
         if (p == point::inf) {
             out << "(inf, inf)";
         } else {
@@ -241,7 +299,7 @@ public:
         return out;
     }
 
-    friend std::ostream& operator<<(std::ostream& out, jacobian_point& p) {
+    friend std::ostream& operator<<(std::ostream& out, const jacobian_point& p) {
         if (p == jacobian_point::inf) {
             out << "(inf, inf, inf)";
         } else {

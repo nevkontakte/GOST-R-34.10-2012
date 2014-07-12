@@ -132,6 +132,10 @@ int main() {
         ASSERT_TRUE(table[0] == ec::point::inf);
         ASSERT_TRUE(table[1] == left);
         ASSERT_TRUE(table[128] == curve.repeated_twice(left, ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
+
+        const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
+        const ec::point expected = curve.mul_scalar(left, multiplier);
+        ASSERT_TRUE(expected == curve.mul_scalar(table, multiplier));
     }
 
     {

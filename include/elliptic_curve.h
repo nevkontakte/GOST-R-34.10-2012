@@ -312,6 +312,34 @@ public:
         }
     }
 
+    template<unsigned window = 8>
+    point mul_scalar(const point (&comb_table)[1 << window], integer_type multiplier) const {
+        const unsigned d = field_type::bits / window;
+
+        integer_type mask = (integer_type(1) << d) - 1;
+
+        integer_type chunks[window];
+        for (unsigned i = 0; i < window; i++) {
+            chunks[i] = multiplier & mask;
+            multiplier >>= d;
+        }
+
+        jacobian_point result = jacobian_point::inf;
+
+        for (unsigned i = d; i > 0; i--) {
+            result = this->twice(result);
+
+            unsigned key = 0;
+            for (unsigned j = 0; j < window; j++) {
+                key += mp::bit_test(chunks[j], i-1) << j;
+            }
+
+            result = this->add(result, comb_table[key]);
+        }
+
+        return result.to_affine(*this);
+    }
+
     friend std::ostream& operator<<(std::ostream& out, const point& p) {
         if (p == point::inf) {
             out << "(inf, inf)";

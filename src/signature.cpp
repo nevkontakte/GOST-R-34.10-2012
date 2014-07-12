@@ -19,6 +19,7 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
                     << "m: " << this->subgroup.modulus << std::endl
                        << "x_p: " << this->basePoint.x << std::endl << "y_p: " << this->basePoint.y << std::endl << std::endl;
 #endif
+    this->curve.comb_precompute(this->basePoint, this->basePointTable);
 }
 
 Gost12S512Status signature::sign(const byte* private_key, const byte* rand, const byte* hash, byte* signature) {
@@ -47,7 +48,7 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     std::cout << "k: " << k << std::endl;
 #endif
 
-    ec::point C = this->curve.mul_scalar(this->basePoint, k);
+    ec::point C = this->curve.mul_scalar(this->basePointTable, k);
 
 #ifdef DEBUG
     std::cout << "x_c: " << C.x << std::endl << "y_c: " << C.y << std::endl;

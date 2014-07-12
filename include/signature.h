@@ -18,6 +18,8 @@ class signature
     ec curve;
     pf subgroup;
     ec::point basePoint;
+    ec::point basePointTable[1 << 8];
+
 public:
     signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[8],
               u_int64_t (&subgroupModulus)[8],

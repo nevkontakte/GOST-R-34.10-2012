@@ -110,7 +110,7 @@ Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_
 
     ec::point Q(pf::import_bytes(public_key_x), pf::import_bytes(public_key_y));
 
-    ec::point C = this->curve.add(this->curve.mul_scalar(this->basePoint, z_1), this->curve.mul_scalar(Q, z_2));
+    ec::point C = this->curve.add(this->curve.mul_scalar(this->basePointTable, z_1), this->curve.mul_scalar(Q, z_2));
 
     pf::integer_type R = this->subgroup.acquire(C.x);
 

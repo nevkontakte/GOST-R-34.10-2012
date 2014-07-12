@@ -126,6 +126,12 @@ int main() {
         ASSERT_TRUE(ec::point::inf == curve.twice(ec::point::inf));
 
         ASSERT_TRUE(ec::point(14, 16) == curve.mulScalar(ec::point(0, 6), 6));
+
+        ec::point table[256];
+        curve.comb_precompute(left, table);
+        ASSERT_TRUE(table[0] == ec::point::inf);
+        ASSERT_TRUE(table[1] == left);
+        ASSERT_TRUE(table[128] == curve.repeated_twice(left, ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
     }
 
     {

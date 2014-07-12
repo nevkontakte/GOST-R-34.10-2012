@@ -50,6 +50,9 @@ public:
         {}
 
         point to_affine(const elliptic_curve& curve) const {
+            if (*this == jacobian_point::inf) {
+                return point::inf;
+            }
             const field_type& f = curve.field;
             integer_type inv_z = f.mul_inverse(this->z); // z^-1
             integer_type inv_zz = f.mul(inv_z, inv_z); // z^-2
@@ -283,6 +286,30 @@ public:
         }
 
         return result.to_affine(*this);
+    }
+
+    template<unsigned window = 8>
+    void comb_precompute(const point& base, point (&table)[1 << window]) const {
+        const unsigned d = field_type::bits / window;
+
+        point pow2[window];
+        pow2[0] = base;
+
+        for (unsigned i = 1; i < window; i++) {
+            pow2[i] = this->repeated_twice(pow2[i-1], d).to_affine(*this);
+        }
+
+        for (unsigned i = 0; i < (1 << window); i++) {
+            jacobian_point p = jacobian_point::inf;
+
+            for (unsigned offset = 0; offset < window; offset++) {
+                if ((i & (1 << offset)) != 0) {
+                    p = this->add(p, pow2[offset]);
+                }
+            }
+
+            table[i] = p.to_affine(*this);
+        }
     }
 
     friend std::ostream& operator<<(std::ostream& out, const point& p) {

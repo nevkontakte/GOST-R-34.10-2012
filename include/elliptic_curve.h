@@ -272,7 +272,7 @@ public:
         return result;
     }
 
-    point mulScalar(const point& p, const integer_type& multiplier) const {
+    point mul_scalar(const point& p, const integer_type& multiplier) const {
         jacobian_point result = jacobian_point::inf;
 
         unsigned total_bits = multiplier.backend().size() * sizeof(mp::limb_type) * 8;

@@ -125,7 +125,7 @@ int main() {
         ASSERT_TRUE(left == curve.add(left, ec::point::inf));
         ASSERT_TRUE(ec::point::inf == curve.twice(ec::point::inf));
 
-        ASSERT_TRUE(ec::point(14, 16) == curve.mulScalar(ec::point(0, 6), 6));
+        ASSERT_TRUE(ec::point(14, 16) == curve.mul_scalar(ec::point(0, 6), 6));
 
         ec::point table[256];
         curve.comb_precompute(left, table);

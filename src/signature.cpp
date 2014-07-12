@@ -47,7 +47,7 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     std::cout << "k: " << k << std::endl;
 #endif
 
-    ec::point C = this->curve.mulScalar(this->basePoint, k);
+    ec::point C = this->curve.mul_scalar(this->basePoint, k);
 
 #ifdef DEBUG
     std::cout << "x_c: " << C.x << std::endl << "y_c: " << C.y << std::endl;
@@ -109,7 +109,7 @@ Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_
 
     ec::point Q(pf::import_bytes(public_key_x), pf::import_bytes(public_key_y));
 
-    ec::point C = this->curve.add(this->curve.mulScalar(this->basePoint, z_1), this->curve.mulScalar(Q, z_2));
+    ec::point C = this->curve.add(this->curve.mul_scalar(this->basePoint, z_1), this->curve.mul_scalar(Q, z_2));
 
     pf::integer_type R = this->subgroup.acquire(C.x);
 

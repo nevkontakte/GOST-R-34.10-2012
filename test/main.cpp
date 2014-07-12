@@ -139,6 +139,26 @@ int main() {
     }
 
     {
+        typedef elliptic_curve<mp::uint512_t, mp::uint1024_t> ec;
+
+        ec::integer_type modulus("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                                 "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDC7");
+        ec::integer_type b("0xE8C2505DEDFC86DDC1BD0B2B6667F1DA34B82574761CB0E879BD081CFD0B626"
+                           "5EE3CB090F30D27614CB4574010DA90DD862EF9D4EBEE4761503190785A71C760");
+        ec curve(modulus, modulus - 3, b);
+
+        ec::point p(3, ec::integer_type("0x7503CFE87A836AE3A61B8816E25450E6CE5E1C93ACF1ABC1778064FDCBEFA92"
+                                        "1DF1626BE4FD036E93D75E6A50E3A41E98028FE5FC235F5B889A589CB5215F2A4"));
+        ec::integer_type k("0x57AA4680416F7E4714A4FBA20F3B5A7A179E2D5B142F5F4919B48A1F3FFEBB5"
+                           "D17D91C0037FEA1136E24AF8F5AA88A9650070B0F6860D803622D2AAD88F93053");
+
+        ec::point table[256];
+        curve.comb_precompute(p, table);
+
+        ASSERT_TRUE(curve.mul_scalar(table, k) == curve.mul_scalar(p, k));
+    }
+
+    {
         typedef prime_field<mp::uint512_t, mp::uint1024_t> pf;
 
         uint64_t m[8] = {

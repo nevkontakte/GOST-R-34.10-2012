@@ -12,6 +12,7 @@ class elliptic_curve {
 public:
     using field_type = prime_field<_integer_type, _double_integer_type>;
     using integer_type = typename field_type::integer_type;
+    using double_integer_type = typename field_type::double_integer_type;
 
     struct point {
         integer_type x;
@@ -46,8 +47,15 @@ public:
         {}
 
         jacobian_point(const point& affine)
-            :x(affine.x),y(affine.y),z(1)
-        {}
+        {
+            if (affine == point::inf) {
+                *this = jacobian_point::inf;
+            } else {
+                x = affine.x;
+                y = affine.y;
+                z = 1;
+            }
+        }
 
         point to_affine(const elliptic_curve& curve) const {
             if (*this == jacobian_point::inf) {
@@ -283,6 +291,7 @@ public:
             if (mp::bit_test(multiplier, i - 1)) {
                 result = this->add(result, p);
             }
+
         }
 
         return result.to_affine(*this);
@@ -316,7 +325,7 @@ public:
     point mul_scalar(const point (&comb_table)[1 << window], integer_type multiplier) const {
         const unsigned d = field_type::bits / window;
 
-        integer_type mask = (integer_type(1) << d) - 1;
+        integer_type mask = static_cast<integer_type>((double_integer_type(1) << d) - 1);
 
         integer_type chunks[window];
         for (unsigned i = 0; i < window; i++) {

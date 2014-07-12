@@ -106,7 +106,6 @@ public:
     }
 
     integer_type mul_inverse(const integer_type& n) const {
-
         integer_type s0 = 1, s1 = 0;
         integer_type r0 = n, r1 = this->modulus;
         integer_type quotient, remainder;

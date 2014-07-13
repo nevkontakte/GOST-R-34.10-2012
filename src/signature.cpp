@@ -19,7 +19,7 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
                     << "m: " << this->subgroup.modulus << std::endl
                        << "x_p: " << this->basePoint.x << std::endl << "y_p: " << this->basePoint.y << std::endl << std::endl;
 #endif
-    this->curve.comb_precompute(this->basePoint, this->basePointTable);
+    this->curve.comb_precompute<window>(this->basePoint, this->basePointTable);
 }
 
 Gost12S512Status signature::sign(const byte* private_key, const byte* rand, const byte* hash, byte* signature) {
@@ -48,7 +48,7 @@ Gost12S512Status signature::sign(const byte* private_key, const byte* rand, cons
     std::cout << "k: " << k << std::endl;
 #endif
 
-    ec::point C = this->curve.mul_scalar(this->basePointTable, k);
+    ec::point C = this->curve.mul_scalar<window>(this->basePointTable, k);
 
 #ifdef DEBUG
     std::cout << "x_c: " << C.x << std::endl << "y_c: " << C.y << std::endl;
@@ -110,7 +110,7 @@ Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_
 
     ec::point Q(pf::import_bytes(public_key_x), pf::import_bytes(public_key_y));
 
-    ec::point C = this->curve.add(this->curve.mul_scalar(this->basePointTable, z_1), this->curve.mul_scalar(Q, z_2));
+    ec::point C = this->curve.add(this->curve.mul_scalar<window>(this->basePointTable, z_1), this->curve.mul_scalar(Q, z_2));
 
     pf::integer_type R = this->subgroup.acquire(C.x);
 

@@ -94,6 +94,14 @@ public:
     {
     }
 
+    point negate(const point& p) {
+        return point(p.x, this->field.inverse(p.y));
+    }
+
+    jacobian_point negate(const jacobian_point& p) {
+        return jacobian_point(p.x, this->field.inverse(p.y), p.z);
+    }
+
     point add(const point& left, const point& right) const {
         if (left == point::inf) {
             return right;
@@ -113,6 +121,11 @@ public:
         result.y = f.sub(f.mul(lambda, f.sub(left.x, result.x)), left.y);
 
         return result;
+    }
+
+    template<typename P1, typename P2>
+    P1 sub(const P1& left, const P2& right) {
+        return this->add(left, this->negate(right));
     }
 
     point twice(const point& p) const {
@@ -299,7 +312,7 @@ public:
 
     template<unsigned window = 8>
     void comb_precompute(const point& base, point (&table)[1 << window]) const {
-        const unsigned d = field_type::bits / window;
+        const unsigned d = field_type::bits / window + ((field_type::bits % window) ? 1 : 0);
 
         point pow2[window];
         pow2[0] = base;
@@ -323,7 +336,7 @@ public:
 
     template<unsigned window = 8>
     point mul_scalar(const point (&comb_table)[1 << window], integer_type multiplier) const {
-        const unsigned d = field_type::bits / window;
+        const unsigned d = field_type::bits / window + ((field_type::bits % window) ? 1 : 0);
 
         integer_type mask = static_cast<integer_type>((double_integer_type(1) << d) - 1);
 
@@ -347,6 +360,18 @@ public:
         }
 
         return result.to_affine(*this);
+    }
+
+    template<unsigned window = 4>
+    void naf_precompute(const point& base, point (&table)[1 << (window - 2)]) const {
+        jacobian_point base_doubled = this->twice(jacobian_point(base));
+        table[0] = base;
+
+        for (unsigned i = 3; i < (1 << (window - 1)); i += 2) {
+            unsigned index = i / 2;
+            table[index] = this->add(base_doubled, table[index - 1]).to_affine(*this);
+        }
+
     }
 
     friend std::ostream& operator<<(std::ostream& out, const point& p) {

@@ -15,10 +15,12 @@ class signature
     using ec = elliptic_curve<mp::uint512_t, mp::uint1024_t>;
     using pf = prime_field<mp::uint512_t, mp::uint1024_t>;
 
+    static const unsigned window = 10;
+
     ec curve;
     pf subgroup;
     ec::point basePoint;
-    ec::point basePointTable[1 << 8];
+    ec::point basePointTable[1 << window];
 
 public:
     signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[8],

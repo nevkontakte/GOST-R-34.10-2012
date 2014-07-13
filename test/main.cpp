@@ -2,6 +2,7 @@
 #include <signature.h>
 #include <prime_field.h>
 #include <elliptic_curve.h>
+#include <naf.h>
 
 #include <iostream>
 
@@ -127,15 +128,32 @@ int main() {
 
         ASSERT_TRUE(ec::point(14, 16) == curve.mul_scalar(ec::point(0, 6), 6));
 
-        ec::point table[256];
-        curve.comb_precompute(left, table);
-        ASSERT_TRUE(table[0] == ec::point::inf);
-        ASSERT_TRUE(table[1] == left);
-        ASSERT_TRUE(table[128] == curve.repeated_twice(left, ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
+        {
+            ec::point table[1 << 8];
+            curve.comb_precompute<8>(left, table);
+            ASSERT_TRUE(table[0] == ec::point::inf);
+            ASSERT_TRUE(table[1] == left);
+            ASSERT_TRUE(table[128] == curve.repeated_twice(left, ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
 
-        const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
-        const ec::point expected = curve.mul_scalar(left, multiplier);
-        ASSERT_TRUE(expected == curve.mul_scalar(table, multiplier));
+            const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
+            const ec::point expected = curve.mul_scalar(left, multiplier);
+            ASSERT_TRUE(expected == curve.mul_scalar<8>(table, multiplier));
+        }
+
+        ASSERT_TRUE(ec::point(1, 2) == curve.negate(ec::point(1, 17 - 2)));
+        ASSERT_TRUE(ec::jacobian_point(1, 2, 3) == curve.negate(ec::jacobian_point(1, 17 - 2, 3)));
+
+        ASSERT_TRUE(curve.add(left, curve.negate(right)) == curve.sub(left, right));
+        ASSERT_TRUE(curve.add(ec::jacobian_point(left), curve.negate(right)) == curve.sub(ec::jacobian_point(left), right));
+
+        {
+            ec::point table [1 << 2];
+            curve.naf_precompute<4>(left, table);
+            ASSERT_TRUE(table[0] == left);
+            ASSERT_TRUE(table[1] == curve.mul_scalar(left, 3));
+            ASSERT_TRUE(table[2] == curve.mul_scalar(left, 5));
+            ASSERT_TRUE(table[3] == curve.mul_scalar(left, 7));
+        }
     }
 
     {
@@ -153,9 +171,25 @@ int main() {
                            "D17D91C0037FEA1136E24AF8F5AA88A9650070B0F6860D803622D2AAD88F93053");
 
         ec::point table[256];
-        curve.comb_precompute(p, table);
+        curve.comb_precompute<8>(p, table);
 
-        ASSERT_TRUE(curve.mul_scalar(table, k) == curve.mul_scalar(p, k));
+        ASSERT_TRUE(curve.mul_scalar<8>(table, k) == curve.mul_scalar(p, k));
+    }
+
+    {
+        naf<4, mp::uint128_t> naf_generator(1122334455);
+        int expected[] =  {
+            7, 0, 0, 0, -1, 0, 0, 0,
+            7, 0, 0, 0,  7, 0, 0, 0,
+            5, 0, 0, 0,  0, 7,
+            0, 0, 0, 1,  0,
+            0, 0, 0, 1,
+        };
+
+        for (auto i = std::begin(expected); i != std::end(expected); i++) {
+            auto actual = naf_generator.next();
+            ASSERT_TRUE(*i == actual);
+        }
     }
 
     {

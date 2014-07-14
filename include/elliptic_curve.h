@@ -46,7 +46,7 @@ public:
             :x(x),y(y),z(z)
         {}
 
-        jacobian_point(const point& affine)
+        explicit jacobian_point(const point& affine)
         {
             if (affine == point::inf) {
                 *this = jacobian_point::inf;
@@ -188,6 +188,7 @@ public:
     /**
      * @brief Point addition for mixed Jacobian-affine coordinates.
      *
+     * 8M + 3S
      * See: Hankerson, D., Vanstone, S., & Menezes, A. (2004). Guide to elliptic curve cryptography.
      * Page 91, alg. 3.22.
      * @param left
@@ -200,7 +201,7 @@ public:
         }
 
         if (left == jacobian_point::inf) {
-            return right;
+            return jacobian_point(right);
         } else if (right == point::inf) {
             return left;
         }
@@ -318,7 +319,7 @@ public:
         pow2[0] = base;
 
         for (unsigned i = 1; i < window; i++) {
-            pow2[i] = this->repeated_twice(pow2[i-1], d).to_affine(*this);
+            pow2[i] = this->repeated_twice(jacobian_point(pow2[i-1]), d).to_affine(*this);
         }
 
         for (unsigned i = 0; i < (1 << window); i++) {
@@ -363,15 +364,69 @@ public:
     }
 
     template<unsigned window = 4>
-    void naf_precompute(const point& base, point (&table)[1 << (window - 2)]) const {
+    void naf_precompute(const point& base, jacobian_point (&table)[1 << (window - 2)]) const {
         jacobian_point base_doubled = this->twice(jacobian_point(base));
-        table[0] = base;
+        table[0] = jacobian_point(base);
 
         for (unsigned i = 3; i < (1 << (window - 1)); i += 2) {
             unsigned index = i / 2;
-            table[index] = this->add(base_doubled, table[index - 1]).to_affine(*this);
+            table[index] = this->add(base_doubled, table[index - 1]);
         }
 
+    }
+
+    /**
+     * @brief See: http://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
+     *
+     * 12M + 4S
+     * @param left
+     * @param right
+     * @return
+     */
+    jacobian_point add(const jacobian_point &left, const jacobian_point &right) const {
+        const field_type& f = this->field;
+
+        jacobian_point result;
+
+        integer_type u1, u2, s1, s2, h, r, left_z_squared, right_z_squared, h_squared;
+
+        left_z_squared = f.mul(left.z, left.z);
+        right_z_squared = f.mul(right.z, right.z);
+
+        u1 = f.mul(left.x, right_z_squared);
+        u2 = f.mul(right.x, left_z_squared);
+
+        left_z_squared = f.mul(left_z_squared, left.z);
+        right_z_squared = f.mul(right_z_squared, right.z);
+
+        s1 = f.mul(left.y, right_z_squared);
+        s2 = f.mul(right.y, left_z_squared);
+
+        if (u1 == u2) {
+            if (s1 != s2) {
+                return jacobian_point::inf;
+            } else {
+                this->twice(left);
+            }
+        }
+
+        h = f.sub(u2, u1);
+        r = f.sub(s2, s1);
+
+        result.z = f.mul(h, left.z, right.z);
+        h_squared = f.mul(h, h);
+
+        result.y = f.mul(u1, h_squared);
+        result.x = f.mul(2, result.y);
+
+        h_squared = f.mul(h, h_squared);
+
+        result.x = f.sub(f.mul(r, r), h_squared, result.x);
+        result.y = f.sub(result.y, result.x);
+        result.y = f.mul(r, result.y);
+        result.y = f.sub(result.y, f.mul(s1, h_squared));
+
+        return result;
     }
 
     friend std::ostream& operator<<(std::ostream& out, const point& p) {

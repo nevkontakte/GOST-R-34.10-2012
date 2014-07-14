@@ -69,6 +69,11 @@ public:
         return static_cast<integer_type>(sum);
     }
 
+    template<typename... Args>
+    inline integer_type sub(const integer_type& left, const integer_type& right, Args... args) const {
+        return this->sub(this->sub(left, right), args...);
+    }
+
     integer_type inverse(const integer_type& n) const {
         return (n == 0) ? n : (this->modulus - n);
     }

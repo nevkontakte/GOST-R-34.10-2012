@@ -121,6 +121,8 @@ int main() {
         ASSERT_TRUE(ec::point(7, 11) == result);
         ASSERT_TRUE(ec::point(7, 11) == curve.add(ec::jacobian_point(left), right).to_affine(curve));
 
+        ASSERT_TRUE(ec::point(7, 11) == curve.add(ec::jacobian_point(left), ec::jacobian_point(right)).to_affine(curve));
+
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(left)); // 2 4
         ASSERT_TRUE(ec::point(2, 4) == curve.twice(ec::jacobian_point(left)).to_affine(curve));
         ASSERT_TRUE(ec::point(2, 4) == curve.repeated_twice(ec::jacobian_point(left), 1).to_affine(curve));
@@ -138,7 +140,7 @@ int main() {
             curve.comb_precompute<8>(left, table);
             ASSERT_TRUE(table[0] == ec::point::inf);
             ASSERT_TRUE(table[1] == left);
-            ASSERT_TRUE(table[128] == curve.repeated_twice(left, ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
+            ASSERT_TRUE(table[128] == curve.repeated_twice(ec::jacobian_point(left), ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
 
             const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
             const ec::point expected = curve.mul_scalar(left, multiplier);
@@ -152,12 +154,12 @@ int main() {
         ASSERT_TRUE(curve.add(ec::jacobian_point(left), curve.negate(right)) == curve.sub(ec::jacobian_point(left), right));
 
         {
-            ec::point table [1 << 2];
+            ec::jacobian_point table [1 << 2];
             curve.naf_precompute<4>(left, table);
-            ASSERT_TRUE(table[0] == left);
-            ASSERT_TRUE(table[1] == curve.mul_scalar(left, 3));
-            ASSERT_TRUE(table[2] == curve.mul_scalar(left, 5));
-            ASSERT_TRUE(table[3] == curve.mul_scalar(left, 7));
+            ASSERT_TRUE(table[0].to_affine(curve) == left);
+            ASSERT_TRUE(table[1].to_affine(curve) == curve.mul_scalar(left, 3));
+            ASSERT_TRUE(table[2].to_affine(curve) == curve.mul_scalar(left, 5));
+            ASSERT_TRUE(table[3].to_affine(curve) == curve.mul_scalar(left, 7));
         }
     }
 

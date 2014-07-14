@@ -110,7 +110,10 @@ Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_
 
     ec::point Q(pf::import_bytes(public_key_x), pf::import_bytes(public_key_y));
 
-    ec::point C = this->curve.add(this->curve.mul_scalar<window>(this->basePointTable, z_1), this->curve.mul_scalar(Q, z_2));
+    ec::jacobian_point tableQ[1 << 2];
+    this->curve.naf_precompute(Q, tableQ);
+
+    ec::point C = this->curve.add(this->curve.mul_scalar<window>(this->basePointTable, z_1), this->curve.mul_scalar<4>(tableQ, z_2).to_affine(curve));
 
     pf::integer_type R = this->subgroup.acquire(C.x);
 

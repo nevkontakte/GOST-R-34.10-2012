@@ -477,7 +477,7 @@ public:
         std::fill(std::begin(naf_table_right), std::end(naf_table_right), 0);
 
         unsigned naf_length = naf<win_left, integer_type>(mul_left, naf_table_left);
-        naf_length = std::max(naf<win_right, integer_type>(mul_right, naf_table_right));
+        naf_length = std::max(naf_length, naf<win_right, integer_type>(mul_right, naf_table_right));
 
         for (unsigned i = naf_length; i > 0; i--) {
             result = this->twice(result);

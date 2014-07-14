@@ -20,6 +20,10 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
                        << "x_p: " << this->basePoint.x << std::endl << "y_p: " << this->basePoint.y << std::endl << std::endl;
 #endif
     this->curve.comb_precompute<comb_window>(this->basePoint, this->basePointTable);
+    this->curve.naf_precompute<static_naf_window>(this->basePoint, this->basePointNafTable);
+
+    std::cout << sizeof(this->basePointTable) << " " << sizeof(this->basePointTable) << " " <<
+                 ((sizeof(this->basePointTable) + sizeof(this->basePointTable))/1024) << std::endl;
 }
 
 Gost12S512Status signature::sign(const byte* private_key, const byte* rand, const byte* hash, byte* signature) {
@@ -113,10 +117,12 @@ Gost12S512Status signature::verify(const byte* public_key_x, const byte* public_
     ec::jacobian_point tableQ[1 << (dynamic_naf_window - 2)];
     this->curve.naf_precompute<dynamic_naf_window>(Q, tableQ);
 
-    ec::point C = this->curve.add(
-                this->curve.mul_scalar<dynamic_naf_window>(tableQ, z_2),
-                this->curve.mul_scalar<comb_window>(this->basePointTable, z_1)
-                ).to_affine(this->curve);
+    ec::point C = this->curve.add_mul<dynamic_naf_window, static_naf_window>(tableQ, z_2, this->basePointNafTable, z_1).to_affine(this->curve);
+
+//    ec::point C = this->curve.add(
+//                this->curve.mul_scalar<dynamic_naf_window>(tableQ, z_2),
+//                this->curve.mul_scalar<comb_window>(this->basePointTable, z_1)
+//                ).to_affine(this->curve);
 
     pf::integer_type R = this->subgroup.acquire(C.x);
 

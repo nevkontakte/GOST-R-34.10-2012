@@ -136,11 +136,11 @@ int main() {
         ASSERT_TRUE(ec::point(14, 16) == curve.mul_scalar(ec::point(0, 6), 6));
 
         {
-            ec::point table[1 << 8];
+            ec::jacobian_point table[1 << 8];
             curve.comb_precompute<8>(left, table);
-            ASSERT_TRUE(table[0] == ec::point::inf);
-            ASSERT_TRUE(table[1] == left);
-            ASSERT_TRUE(table[128] == curve.repeated_twice(ec::jacobian_point(left), ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
+            ASSERT_TRUE(table[0] == ec::jacobian_point::inf);
+            ASSERT_TRUE(table[1].to_affine(curve) == left);
+            ASSERT_TRUE(table[128].to_affine(curve) == curve.repeated_twice(ec::jacobian_point(left), ec::field_type::bits - ec::field_type::bits/8).to_affine(curve));
 
             const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
             const ec::point expected = curve.mul_scalar(left, multiplier);
@@ -181,7 +181,7 @@ int main() {
         ec::integer_type k("0x57AA4680416F7E4714A4FBA20F3B5A7A179E2D5B142F5F4919B48A1F3FFEBB5"
                            "D17D91C0037FEA1136E24AF8F5AA88A9650070B0F6860D803622D2AAD88F93053");
 
-        ec::point table[256];
+        ec::jacobian_point table[256];
         curve.comb_precompute<8>(p, table);
 
         ASSERT_TRUE(curve.mul_scalar<8>(table, k) == curve.mul_scalar(p, k));

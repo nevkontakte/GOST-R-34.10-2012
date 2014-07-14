@@ -377,14 +377,14 @@ public:
     }
 
     template<unsigned win_left = 8>
-    void comb_precompute(const point& base, point (&table)[1 << win_left]) const {
+    void comb_precompute(const point& base, jacobian_point (&table)[1 << win_left]) const {
         const unsigned d = field_type::bits / win_left + ((field_type::bits % win_left) ? 1 : 0);
 
-        point pow2[win_left];
-        pow2[0] = base;
+        jacobian_point pow2[win_left];
+        pow2[0] = jacobian_point(base);
 
         for (unsigned i = 1; i < win_left; i++) {
-            pow2[i] = this->repeated_twice(jacobian_point(pow2[i-1]), d).to_affine(*this);
+            pow2[i] = this->repeated_twice(pow2[i-1], d);
         }
 
         for (unsigned i = 0; i < (1 << win_left); i++) {
@@ -396,12 +396,12 @@ public:
                 }
             }
 
-            table[i] = p.to_affine(*this);
+            table[i] = p;
         }
     }
 
     template<unsigned win_left = 8>
-    point mul_scalar(const point (&comb_table)[1 << win_left], integer_type multiplier) const {
+    point mul_scalar(const jacobian_point (&comb_table)[1 << win_left], integer_type multiplier) const {
         const unsigned d = field_type::bits / win_left + ((field_type::bits % win_left) ? 1 : 0);
 
         integer_type mask = static_cast<integer_type>((double_integer_type(1) << d) - 1);

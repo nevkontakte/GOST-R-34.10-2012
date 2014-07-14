@@ -22,8 +22,9 @@ signature::signature(u_int64_t (&modulus)[8], u_int64_t (&a)[8], u_int64_t (&b)[
     this->curve.comb_precompute<comb_window>(this->basePoint, this->basePointTable);
     this->curve.naf_precompute<static_naf_window>(this->basePoint, this->basePointNafTable);
 
-    std::cout << sizeof(this->basePointTable) << " " << sizeof(this->basePointTable) << " " <<
-                 ((sizeof(this->basePointTable) + sizeof(this->basePointTable))/1024) << std::endl;
+    std::cout << sizeof(this->basePointTable) << " " << sizeof(this->basePointNafTable) << " " <<
+                 ((sizeof(this->basePointTable) + sizeof(this->basePointNafTable))/1024) << " " <<
+                 sizeof(ec::jacobian_point) << std::endl;
 }
 
 Gost12S512Status signature::sign(const byte* private_key, const byte* rand, const byte* hash, byte* signature) {

@@ -17,12 +17,12 @@ class signature
 
     static const unsigned comb_window = 10;
     static const unsigned dynamic_naf_window = 6;
-    static const unsigned static_naf_window = 15;
+    static const unsigned static_naf_window = 10;
 
     ec curve;
     pf subgroup;
     ec::point basePoint;
-    ec::point basePointTable[1 << comb_window];
+    ec::jacobian_point basePointTable[1 << comb_window];
     ec::jacobian_point basePointNafTable[1 << (static_naf_window - 2)];
 
 public:

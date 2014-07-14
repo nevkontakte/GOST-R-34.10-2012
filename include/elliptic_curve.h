@@ -2,8 +2,10 @@
 #define ELLIPTIC_CURVE_H
 
 #include <prime_field.h>
+#include <naf.h>
 
 #include <ostream>
+#include <cstdlib>
 
 namespace gost_ecc {
 
@@ -94,11 +96,11 @@ public:
     {
     }
 
-    point negate(const point& p) {
+    point negate(const point& p) const {
         return point(p.x, this->field.inverse(p.y));
     }
 
-    jacobian_point negate(const jacobian_point& p) {
+    jacobian_point negate(const jacobian_point& p) const {
         return jacobian_point(p.x, this->field.inverse(p.y), p.z);
     }
 
@@ -124,7 +126,7 @@ public:
     }
 
     template<typename P1, typename P2>
-    P1 sub(const P1& left, const P2& right) {
+    P1 sub(const P1& left, const P2& right) const {
         return this->add(left, this->negate(right));
     }
 
@@ -375,6 +377,29 @@ public:
 
     }
 
+    template<unsigned window = 4>
+    jacobian_point mul_scalar(jacobian_point (&p)[1 << (window - 2)], const integer_type& multiplier) const {
+        jacobian_point result = jacobian_point::inf;
+
+        short naf_table[field_type::bits + 1];
+        unsigned naf_length = naf<window, integer_type>(multiplier, naf_table);
+
+        for (unsigned i = naf_length; i > 0; i--) {
+            result = this->twice(result);
+
+            short ki = naf_table[i-1];
+            if (ki != 0) {
+                if (ki > 0) {
+                    result = this->add(result, p[ki/2]);
+                } else {
+                    result = this->sub(result, p[-ki/2]);
+                }
+            }
+        }
+
+        return result;
+    }
+
     /**
      * @brief See: http://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
      *
@@ -384,6 +409,12 @@ public:
      * @return
      */
     jacobian_point add(const jacobian_point &left, const jacobian_point &right) const {
+        if (left == jacobian_point::inf) {
+            return right;
+        } else if (right == jacobian_point::inf) {
+            return left;
+        }
+
         const field_type& f = this->field;
 
         jacobian_point result;
@@ -406,7 +437,7 @@ public:
             if (s1 != s2) {
                 return jacobian_point::inf;
             } else {
-                this->twice(left);
+                return this->twice(left);
             }
         }
 

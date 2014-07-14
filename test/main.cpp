@@ -160,6 +160,10 @@ int main() {
             ASSERT_TRUE(table[1].to_affine(curve) == curve.mul_scalar(left, 3));
             ASSERT_TRUE(table[2].to_affine(curve) == curve.mul_scalar(left, 5));
             ASSERT_TRUE(table[3].to_affine(curve) == curve.mul_scalar(left, 7));
+
+            const ec::integer_type multiplier("0x2DFBC1B372D89A1188C09C52E0EEC61FCE52032AB1022E8E67ECE6672B043EE5");
+            const ec::point expected = curve.mul_scalar(left, multiplier);
+            ASSERT_TRUE(expected == curve.mul_scalar<4>(table, multiplier).to_affine(curve));
         }
     }
 
@@ -184,8 +188,9 @@ int main() {
     }
 
     {
-        naf<4, mp::uint128_t> naf_generator(1122334455);
-        int expected[] =  {
+        short actual[129];
+        unsigned length = naf<4, mp::uint128_t>(1122334455, actual);
+        short expected[] =  {
             7, 0, 0, 0, -1, 0, 0, 0,
             7, 0, 0, 0,  7, 0, 0, 0,
             5, 0, 0, 0,  0, 7,
@@ -193,9 +198,9 @@ int main() {
             0, 0, 0, 1,
         };
 
-        for (auto i = std::begin(expected); i != std::end(expected); i++) {
-            auto actual = naf_generator.next();
-            ASSERT_TRUE(*i == actual);
+        ASSERT_TRUE(length == std::end(expected) - std::begin(expected));
+        for (auto i = 0; i < std::end(expected) - std::begin(expected); i++) {
+            ASSERT_TRUE(expected[i] == actual[i]);
         }
     }
 

@@ -8,37 +8,26 @@ namespace gost_ecc {
 namespace mp = ::boost::multiprecision;
 
 template<unsigned window, typename integer_type>
-class naf {
-protected:
-    integer_type n;
-    const unsigned mask;
-    const unsigned shift;
+unsigned naf(integer_type n, short table[]) {
+    const unsigned short mask = (1 << window) - 1;
+    const unsigned short shift = 1 << window;
 
-public:
-    naf(const integer_type n)
-        :n(n), mask( (1 << window) - 1 ), shift( 1 << window )
-    {}
-
-    int next() {
-        if (n > 0) {
-            int ki;
-            if (mp::bit_test(this->n, 0)) {
-                ki = static_cast<int>(this->n & this->mask);
-                if (ki > (1 << (window - 1))) {
-                    ki -= shift;
-                }
-                this->n = static_cast<integer_type>(this->n - ki);
-            } else {
-                ki = 0;
+    unsigned i;
+    for (i = 0; n > 0; i++) {
+        if (mp::bit_test(n, 0)) {
+            table[i] = static_cast<short>(n & mask);
+            if (table[i] > (1 << (window - 1))) {
+                table[i] -= shift;
             }
-            this->n >>= 1;
-
-            return ki;
+            n = static_cast<integer_type>(n - table[i]);
         } else {
-            return 0;
+            table[i] = 0;
         }
+        n >>= 1;
     }
-};
+
+    return i;
+}
 
 }
 

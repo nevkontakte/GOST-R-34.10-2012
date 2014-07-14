@@ -138,11 +138,11 @@ public:
         }
 
         const field_type& f = this->field;
-        integer_type lambda = f.add(f.mul(3, f.mul(p.x, p.x)), this->a);
-        lambda = f.mul(lambda, f.mul_inverse(f.mul(2, p.y)));
+        integer_type lambda = f.add(f.mul3(f.mul(p.x, p.x)), this->a);
+        lambda = f.mul(lambda, f.mul_inverse(f.mul2(p.y)));
 
         point result;
-        result.x = f.sub(f.mul(lambda, lambda), f.mul(2, p.x));
+        result.x = f.sub(f.mul(lambda, lambda), f.mul2(p.x));
         result.y = f.sub(f.mul(lambda, f.sub(p.x, result.x)), p.y);
 
         return result;
@@ -172,15 +172,15 @@ public:
         t2          = f.sub(p.x, t1);
         t1          = f.add(p.x, t1);
         t2          = f.mul(t1, t2);
-        t2          = f.mul(3, t2); // A = 3 (X1 - Z1^2) (X1 + Z1^2)
-        result.y    = f.mul(2, p.y); // B = 2Y1
+        t2          = f.mul3(t2); // A = 3 (X1 - Z1^2) (X1 + Z1^2)
+        result.y    = f.mul2(p.y); // B = 2Y1
         result.z    = f.mul(result.y, p.z);
         result.y    = f.mul(result.y, result.y); // C = B^2
         t3          = f.mul(result.y, p.x); // D = CX1
         result.y    = f.mul(result.y, result.y);
         result.y    = f.mul(result.y, this->inv_2);
         result.x    = f.mul(t2, t2);
-        t1          = f.mul(2, t3);
+        t1          = f.mul2(t3);
         result.x    = f.sub(result.x, t1);
         t1          = f.sub(t3, result.x);
         t1          = f.mul(t1, t2);
@@ -234,7 +234,7 @@ public:
         t3          = f.mul(t1, t1);
         t4          = f.mul(t3, t1);
         t3          = f.mul(t3, left.x);
-        t1          = f.mul(2, t3);
+        t1          = f.mul2(t3);
         result.x    = f.mul(t2, t2);
         result.x    = f.sub(result.x, t1);
         result.x    = f.sub(result.x, t4);
@@ -265,18 +265,18 @@ public:
 
         integer_type a, b, w, y_squared, t1, t2;
 
-        result.y    = f.mul(2, result.y); // Y <- 2Y
+        result.y    = f.mul2(result.y); // Y <- 2Y
         w           = f.mul(result.z, result.z);
         w           = f.mul(w, w); // W <- Z^4
 
         while (count > 0) {
             a           = f.mul(result.x, result.x); // a = X^2
             a           = f.sub(a, w); // a = X^2 - W
-            a           = f.mul(3, a); // a = 3 (X^2 - W)
+            a           = f.mul3(a); // a = 3 (X^2 - W)
 
             y_squared   = f.mul(result.y, result.y);
             b           = f.mul(result.x, y_squared); // B = X Y^2
-            result.x    = f.sub(f.mul(a, a), f.mul(2, b)); // X = A^2 - 2B
+            result.x    = f.sub(f.mul(a, a), f.mul2(b)); // X = A^2 - 2B
             result.z    = f.mul(result.z, result.y); // Z = ZY
 
             count--;
@@ -289,7 +289,7 @@ public:
 
             result.y = f.sub(b, result.x); // B - X
             result.y = f.mul(a, result.y); // A(B - X)
-            result.y = f.mul(2, result.y); // 2A (B - X)
+            result.y = f.mul2(result.y); // 2A (B - X)
             result.y = f.sub(result.y, y_squared); // Y = 2A (B - X) - Y^4
         }
 
@@ -450,7 +450,7 @@ public:
         h_squared = f.mul(h, h);
 
         result.y = f.mul(u1, h_squared);
-        result.x = f.mul(2, result.y);
+        result.x = f.mul2(result.y);
 
         h_squared = f.mul(h, h_squared);
 

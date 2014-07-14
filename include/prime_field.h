@@ -58,6 +58,19 @@ public:
         return static_cast<integer_type>(sum);
     }
 
+    template<typename... Args>
+    inline integer_type add(const integer_type& left, const integer_type& right, Args... args) const {
+        return this->add(this->add(left, right), args...);
+    }
+
+    inline integer_type mul2(const integer_type& n) const {
+        return this->add(n, n);
+    }
+
+    inline integer_type mul3(const integer_type& n) const {
+        return this->add(n, n, n);
+    }
+
     integer_type sub(const integer_type& left, const integer_type& right) const {
         double_integer_type sum = left;
 

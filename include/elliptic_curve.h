@@ -9,10 +9,10 @@
 
 namespace gost_ecc {
 
-template <typename _integer_type, typename _double_integer_type>
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type = _double_integer_type>
 class elliptic_curve {
 public:
-    using field_type = prime_field<_integer_type, _double_integer_type>;
+    using field_type = prime_field<_integer_type, _double_integer_type, _pm_integer_type>;
     using integer_type = typename field_type::integer_type;
     using double_integer_type = typename field_type::double_integer_type;
 
@@ -481,11 +481,11 @@ public:
     }
 };
 
-template <typename _integer_type, typename _double_integer_type>
-const typename elliptic_curve<_integer_type, _double_integer_type>::point elliptic_curve<_integer_type, _double_integer_type>::point::inf(1, 0);
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type>
+const typename elliptic_curve<_integer_type, _double_integer_type, _pm_integer_type>::point elliptic_curve<_integer_type, _double_integer_type, _pm_integer_type>::point::inf(1, 0);
 
-template <typename _integer_type, typename _double_integer_type>
-const typename elliptic_curve<_integer_type, _double_integer_type>::jacobian_point elliptic_curve<_integer_type, _double_integer_type>::jacobian_point::inf(1, 1, 0);
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type>
+const typename elliptic_curve<_integer_type, _double_integer_type, _pm_integer_type>::jacobian_point elliptic_curve<_integer_type, _double_integer_type, _pm_integer_type>::jacobian_point::inf(1, 1, 0);
 }
 
 #endif // ELLIPTIC_CURVE_H

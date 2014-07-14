@@ -10,11 +10,12 @@ namespace gost_ecc {
 
 namespace mp = ::boost::multiprecision;
 
-template <typename _integer_type, typename _double_integer_type>
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type = _double_integer_type>
 class prime_field {
 public:
     typedef _integer_type integer_type;
     typedef _double_integer_type double_integer_type;
+    typedef _pm_integer_type pm_integer_type;
 
     static const unsigned pseudo_mersenne_limit;
 
@@ -26,9 +27,9 @@ protected:
 
     enum { rGeneric, rPseudoMersenne } reduction_type;
 
-    union {
+    struct {
         struct {
-            unsigned remainder;
+            integer_type remainder;
         } pm;
     } modulus_aux;
 
@@ -39,7 +40,7 @@ public:
     {
         if ((~modulus) < pseudo_mersenne_limit) {
             this->reduction_type = rPseudoMersenne;
-            this->modulus_aux.pm.remainder = static_cast<unsigned>(~modulus) + 1;
+            this->modulus_aux.pm.remainder = ~modulus + 1;
         }
     }
 
@@ -48,7 +49,7 @@ public:
     }
 
     integer_type add(const integer_type& left, const integer_type& right) const {
-        double_integer_type sum;
+        pm_integer_type sum;
         mp::add(sum, left, right);
 
         if (sum > this->modulus) {
@@ -72,7 +73,7 @@ public:
     }
 
     integer_type sub(const integer_type& left, const integer_type& right) const {
-        double_integer_type sum = left;
+        pm_integer_type sum = left;
 
         if (left < right) {
             sum += this->modulus;
@@ -105,17 +106,17 @@ public:
 
     integer_type reduce(const double_integer_type& n) const {
         if (this->reduction_type == rPseudoMersenne) {
-            static const double_integer_type mask = (double_integer_type(1) << bits) - 1;
+            static const pm_integer_type mask = (pm_integer_type(1) << bits) - 1;
 
-            double_integer_type q = n >> bits;
-            double_integer_type r = n & mask;
+            integer_type q = static_cast<integer_type>(n >> bits);
+            pm_integer_type r = static_cast<pm_integer_type>(n & mask);
 
-            double_integer_type cq;
+            pm_integer_type cq;
 
             for (unsigned i = 0; (q > 0) && (i < 2); i++) {
-                cq = this->modulus_aux.pm.remainder * q;
+                mp::multiply(cq, this->modulus_aux.pm.remainder, q);
                 r += cq & mask;
-                q = cq >> bits;
+                q = static_cast<integer_type>(cq >> bits);
             }
 
             while (r >= this->modulus) {
@@ -180,11 +181,11 @@ public:
 template <unsigned bits>
 using cpp_int_fixed = mp::number<mp::cpp_int_backend<bits, bits, mp::unsigned_magnitude, mp::unchecked, void> >;
 
-template <typename _integer_type, typename _double_integer_type>
-const std::size_t prime_field<_integer_type, _double_integer_type>::bits = _integer_type::backend_type::internal_limb_count * _integer_type::backend_type::limb_bits;
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type>
+const std::size_t prime_field<_integer_type, _double_integer_type, _pm_integer_type>::bits = _integer_type::backend_type::internal_limb_count * _integer_type::backend_type::limb_bits;
 
-template <typename _integer_type, typename _double_integer_type>
-const unsigned prime_field<_integer_type, _double_integer_type>::pseudo_mersenne_limit = 1024;
+template <typename _integer_type, typename _double_integer_type, typename _pm_integer_type>
+const unsigned prime_field<_integer_type, _double_integer_type, _pm_integer_type>::pseudo_mersenne_limit = 1024;
 
 }
 #endif // PRIME_FIELD_H

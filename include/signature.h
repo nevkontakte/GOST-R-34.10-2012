@@ -12,7 +12,7 @@ using byte = unsigned char;
 
 class signature
 {
-    using ec = elliptic_curve<mp::uint512_t, mp::uint1024_t>;
+    using ec = elliptic_curve<mp::uint512_t, mp::uint1024_t, cpp_int_fixed<528>>;
     using pf = prime_field<mp::uint512_t, mp::uint1024_t>;
 
     static const unsigned comb_window = 10;

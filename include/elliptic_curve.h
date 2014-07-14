@@ -111,6 +111,8 @@ public:
             return left;
         } else if (left == right) {
             return this->twice(left);
+        } else if (left == this->negate(right)) {
+            return point::inf;
         }
 
         const field_type& f = this->field;

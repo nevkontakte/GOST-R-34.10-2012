@@ -80,6 +80,11 @@ public:
         return this->reduce(sum);
     }
 
+    template<typename... Args>
+    inline integer_type mul(const integer_type& left, const integer_type& right, Args... args) const {
+        return this->mul(this->mul(left, right), args...);
+    }
+
     integer_type reduce(const double_integer_type& n) const {
         if (this->reduction_type == rPseudoMersenne) {
             static const double_integer_type mask = (double_integer_type(1) << bits) - 1;

@@ -92,6 +92,11 @@ int main() {
 
         const mp::uint256_t inv = field.mul_inverse(left);
         ASSERT_TRUE(1 == field.mul(left, inv));
+
+        const mp::uint256_t prodprod("0x44fe9963117e27cf2c4ea7ada33a47eec7aac295b7378a3d04b5a154bd5b45be");
+        ASSERT_TRUE(prodprod == field.mul(left, right, right));
+        ASSERT_TRUE(prodprod == field.mul(right, left, right));
+        ASSERT_TRUE(prodprod == field.mul(right, right, left));
     }
 
     {
